@@ -1,0 +1,9 @@
+{
+  "name": "hozor-tanhim",
+  "version": "1.0.0",
+  "description": "Найзуудтайгаа онлайн Блэкжек, 13, Покер тоглох сайт",
+  "main": "server.js",
+  "scripts": { "start": "node server.js" },
+  "engines": { "node": ">=18" },
+  "dependencies": { "ws": "8.18.0" }
+}

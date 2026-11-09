@@ -1,0 +1,517 @@
+<!doctype html>
+<html lang="mn"><head><meta charset="utf-8">
+<title>Хөзрийн Танхим</title>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#06140f">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,500;0,6..96,700;1,6..96,600&family=Manrope:wght@400;600;800&family=JetBrains+Mono:wght@500;700&display=swap">
+<style>
+/* Layout: private card club. Lobby = three game tiles + open tables; table = wood-railed felt (center play area, nameplate seats) beside a chat/leaderboard rail. Single committed dark look. */
+:root{
+  --night:#06140f; --emerald:#0c3a2f; --felt:#11584a; --felt-d:#0a3a30;
+  --gold:#e3c27a; --gold-d:#a8813a; --ink:#f5f0e3; --muted:#9db8ad; --line:#ffffff1c;
+  --glass:#0b1f19cc; --card:#fcfbf7; --red:#c62f3b; --black:#17171b;
+  --win:#74e0a4; --lose:#ff8a80; --turn:#ffd76a;
+  --display:"Bodoni Moda",Didot,"Times New Roman",serif; --body:"Manrope",system-ui,sans-serif; --mono:"JetBrains Mono",ui-monospace,monospace;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}[hidden]{display:none!important}img{max-width:100%}
+body{margin:0;font-size:14px;min-height:100vh;color:var(--ink);font-family:var(--body);background:var(--night);
+  background-image:radial-gradient(60% 50% at 15% 0%,#1d5a4a66,transparent 70%),radial-gradient(50% 40% at 90% 10%,#7a5a2033,transparent 70%),linear-gradient(180deg,var(--emerald),var(--night) 70%);background-attachment:fixed;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:22px 40px}
+body::after{content:"";position:fixed;inset:0;pointer-events:none;opacity:.07;z-index:0;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
+.wrap{position:relative;z-index:1;max-width:1120px;margin:0 auto;display:flex;flex-direction:column;gap:22px}
+button{font:inherit}
+/* header */
+header{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px}
+.brand{display:flex;align-items:center;gap:14px}
+.mark{width:48px;height:48px;border-radius:50%;display:grid;place-items:center;font-size:1.5rem;color:var(--night);
+  background:radial-gradient(circle at 35% 30%,#fff3cf,var(--gold) 45%,var(--gold-d));box-shadow:0 0 0 3px #0008,0 0 0 4px var(--gold-d),0 6px 20px #0008}
+h1{font-family:var(--display);font-weight:600;font-style:italic;font-size:2rem;margin:0;letter-spacing:.01em;
+  background:linear-gradient(180deg,#fff6dc,var(--gold) 60%,var(--gold-d));-webkit-background-clip:text;background-clip:text;color:transparent}
+.tag{margin:2px 0 0;font-size:.72rem;letter-spacing:.22em;text-transform:uppercase;color:var(--muted)}
+.me{display:flex;align-items:center;gap:10px;background:var(--glass);border:1px solid var(--line);border-radius:999px;padding:5px 6px 5px 5px}
+.me[hidden]{display:none}
+.me span{font-weight:800;font-size:.9rem;max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.av{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;font-weight:800;font-size:.85rem;color:#0b1712;flex:none;box-shadow:0 0 0 2px #0006}
+h2{font-family:var(--display);font-weight:600;font-size:1.5rem;margin:0;text-wrap:balance}
+h3{font-family:var(--display);font-weight:600;font-size:1.15rem;margin:0}
+.eyebrow{font-size:.7rem;letter-spacing:.2em;text-transform:uppercase;color:var(--gold)}
+.muted{color:var(--muted)}
+.glass{background:var(--glass);border:1px solid var(--line);border-radius:20px;padding:18px;backdrop-filter:blur(8px);display:flex;flex-direction:column;gap:12px;min-width:0}
+input[type=text],input[type=number]{font:inherit;background:#00000059;color:var(--ink);border:1px solid #ffffff2e;border-radius:12px;padding:11px 14px;min-width:0;flex:1}
+input:focus{outline:none;border-color:var(--gold);box-shadow:0 0 0 3px #e3c27a33}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.btn{font-weight:800;font-size:.92rem;border:0;border-radius:12px;padding:11px 16px;cursor:pointer;color:#241703;
+  background:linear-gradient(180deg,#f6dc9c,var(--gold) 55%,#c99d4b);box-shadow:0 2px 0 #6e5121,0 6px 16px #0006,inset 0 1px 0 #fff8;transition:transform .1s,filter .15s}
+.btn:hover{filter:brightness(1.07)} .btn:active{transform:translateY(1px)}
+.btn.alt{background:#ffffff0f;color:var(--ink);box-shadow:inset 0 0 0 1px #ffffff40}
+.btn.red{background:linear-gradient(180deg,#e0575f,#a8242e);color:#fff;box-shadow:0 2px 0 #5c1218,0 6px 16px #0006}
+.btn.sm{padding:7px 12px;font-size:.82rem;border-radius:10px}
+.btn:disabled{opacity:.35;cursor:default;filter:none;transform:none}
+.btn:focus-visible,.chip:focus-visible,.tbl:focus-visible,.c.pick:focus-visible{outline:3px solid var(--ink);outline-offset:3px}
+.notice{border:1px dashed var(--gold);border-radius:20px;padding:20px;line-height:1.6;background:var(--glass)}
+.notice b{color:var(--gold)}
+/* lobby */
+.hero{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,.9fr);gap:22px;align-items:center}
+@media (max-width:760px){.hero{grid-template-columns:minmax(0,1fr)}}
+.hero h2{font-size:clamp(1.9rem,4.6vw,3rem);line-height:1.08;font-weight:500}
+.hero h2 em{font-style:italic;color:var(--gold)}
+.hero p{margin:0;line-height:1.6;color:var(--muted);max-width:52ch}
+.games{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+@media (max-width:760px){.games{grid-template-columns:minmax(0,1fr)}}
+.game-tile{position:relative;overflow:hidden;border-radius:22px;padding:18px;display:flex;flex-direction:column;gap:10px;border:1px solid #e3c27a40;
+  background:radial-gradient(120% 90% at 50% 0%,var(--felt),var(--felt-d) 70%);box-shadow:inset 0 0 0 6px #00000030,0 10px 30px #0007}
+.fan{height:112px;position:relative;margin:4px 0 6px}
+.fan .c{position:absolute;left:50%;top:6px;margin:0;transform-origin:50% 120%}
+.fan .c:nth-child(1){transform:translateX(-50%) rotate(-16deg)}
+.fan .c:nth-child(2){transform:translateX(-50%) rotate(0deg) translateY(-6px)}
+.fan .c:nth-child(3){transform:translateX(-50%) rotate(16deg)}
+.game-tile:hover .fan .c:nth-child(1){transform:translateX(-58%) rotate(-22deg)}
+.game-tile:hover .fan .c:nth-child(3){transform:translateX(-42%) rotate(22deg)}
+.fan .c{transition:transform .3s ease}
+.game-tile h3{font-size:1.6rem}
+.game-tile p{margin:0;font-size:.88rem;color:var(--muted);line-height:1.5}
+.pill{display:inline-flex;align-items:center;gap:6px;font-size:.72rem;font-weight:800;letter-spacing:.06em;padding:4px 9px;border-radius:999px;background:#0006;color:var(--gold);width:fit-content}
+.tables{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px}
+.tbl{all:unset;cursor:pointer;background:#ffffff08;border:1px solid var(--line);border-radius:16px;padding:14px 16px;display:flex;flex-direction:column;gap:6px;transition:border-color .15s,background .15s}
+.tbl:hover{border-color:var(--gold);background:#ffffff10}
+.tbl b{font-family:var(--display);font-size:1.15rem;font-weight:600}
+.tbl small{font-size:.78rem;color:var(--muted)}
+.empty{color:var(--muted);font-size:.9rem;margin:0}
+.steps{margin:0;padding-left:20px;line-height:1.7;color:var(--muted);font-size:.9rem}
+.steps b{color:var(--ink)}
+/* cards */
+.c{width:66px;height:96px;border-radius:9px;background:linear-gradient(160deg,#fff,var(--card) 60%,#efe9da);margin-left:-30px;position:relative;font-family:var(--display);flex:none;
+  box-shadow:0 1px 0 #fff inset,0 6px 14px #0008,0 0 0 1px #00000022}
+.c.new{animation:deal .34s cubic-bezier(.2,.8,.3,1.2) both}
+.c.red{color:var(--red)} .c.blk{color:var(--black)}
+.c .tl{position:absolute;top:5px;left:7px;line-height:.92;font-size:1.05rem;font-weight:700;text-align:center}
+.c .mid{position:absolute;inset:0;display:grid;place-items:center;font-size:2rem}
+.c.back{background:radial-gradient(circle at 50% 50%,#b23441 0 18%,transparent 19%),repeating-linear-gradient(45deg,#7b1b26 0 5px,#922634 5px 10px);border:4px solid var(--card)}
+.c.slot{background:#00000026;box-shadow:inset 0 0 0 1.5px #ffffff26;margin-left:0}
+@keyframes deal{from{transform:translateY(-46px) rotate(-10deg) scale(.9);opacity:0}to{transform:none;opacity:1}}
+/* table */
+.game{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:20px;align-items:start}
+@media (max-width:880px){.game{grid-template-columns:minmax(0,1fr)}}
+.rail{border-radius:clamp(30px,6vw,80px);padding:12px;background:linear-gradient(160deg,#6b3f22,#3b2112 45%,#5a341b 70%,#2a170b);box-shadow:0 20px 50px #000a,inset 0 2px 0 #ffffff22}
+.felt{position:relative;border-radius:clamp(22px,5vw,70px);padding:20px clamp(12px,2.5vw,26px) 24px;display:flex;flex-direction:column;gap:16px;min-width:0;
+  background:radial-gradient(ellipse 80% 60% at 50% 35%,#1d7562,var(--felt) 45%,var(--felt-d));box-shadow:inset 0 0 70px #000a}
+.felt::before{content:"";position:absolute;inset:10px;border:1.5px solid #e3c27a3a;border-radius:inherit;pointer-events:none}
+.felt>*{position:relative}
+.tophead{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.tophead h2{font-size:1.25rem;font-style:italic}
+.center{display:flex;flex-direction:column;align-items:center;gap:10px;min-height:150px;justify-content:center}
+.label{font-size:.7rem;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);display:flex;gap:8px;align-items:center}
+.score{font-family:var(--mono);background:#0007;color:var(--ink);border-radius:999px;padding:2px 9px;font-size:.78rem;letter-spacing:0}
+.hand{display:flex;justify-content:center;min-height:100px;padding-left:30px}
+.board{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+.board .c{margin-left:0}
+.pot{font-family:var(--mono);font-weight:700;color:var(--gold);background:#0007;border:1px solid #e3c27a55;border-radius:999px;padding:5px 14px;font-size:.9rem}
+.msg{text-align:center;font-family:var(--display);font-size:1.45rem;font-style:italic;min-height:2rem;margin:0;text-wrap:balance}
+.seats{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px}
+.seat{background:#00000038;border:1.5px solid #ffffff12;border-radius:16px;padding:10px 8px 12px;display:flex;flex-direction:column;align-items:center;gap:6px;min-width:0;transition:border-color .2s,box-shadow .2s}
+.seat.turn{border-color:var(--turn);box-shadow:0 0 0 4px #ffd76a1f,0 0 24px #ffd76a33}
+.seat.mine{background:#ffffff0d}
+.seat.out{opacity:.5}
+.seat .hand{min-height:78px;padding-left:26px}
+.seat .c{width:52px;height:76px;margin-left:-26px}
+.seat .c .mid{font-size:1.5rem}.seat .c .tl{font-size:.9rem}
+.plate{display:flex;align-items:center;gap:8px;max-width:100%}
+.plate .av{width:26px;height:26px;font-size:.75rem;position:relative}
+.plate .av.on::after{content:"";position:absolute;right:-2px;bottom:-2px;width:9px;height:9px;border-radius:50%;background:var(--win);box-shadow:0 0 0 2px var(--felt-d)}
+.nick{font-weight:800;font-size:.9rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.badges{display:flex;gap:4px}
+.bdg{font-family:var(--mono);font-size:.62rem;font-weight:700;padding:2px 5px;border-radius:6px;background:var(--gold);color:#241703}
+.bdg.alt{background:#ffffff22;color:var(--ink)}
+.meta{font-family:var(--mono);font-size:.76rem;color:var(--muted);text-align:center}
+.res{font-family:var(--mono);font-weight:700;font-size:.8rem;text-align:center}
+.res.win{color:var(--win)}.res.lose{color:var(--lose)}.res.push{color:var(--gold)}
+.mini{display:flex;align-items:center;gap:6px;font-family:var(--mono);font-size:.8rem;color:var(--ink)}
+.mini i{width:16px;height:22px;border-radius:3px;background:repeating-linear-gradient(45deg,#7b1b26 0 3px,#922634 3px 6px);border:2px solid var(--card)}
+.myhand{display:flex;flex-direction:column;align-items:center;gap:8px;padding-top:6px;border-top:1px solid #ffffff14}
+.myhand .hand{overflow-x:auto;max-width:100%;padding:16px 0 6px 34px;justify-content:flex-start}
+.myhand .hand.center{justify-content:center}
+.myhand .c{margin-left:-34px}
+.c.pick{cursor:pointer;transition:transform .15s}
+.c.pick:hover{transform:translateY(-6px)}
+.c.sel{transform:translateY(-16px);box-shadow:0 0 0 3px var(--gold),0 10px 20px #000a}
+.hint{font-size:.85rem;color:var(--muted);min-height:1.2em;text-align:center}
+.hint.ok{color:var(--win)}.hint.bad{color:var(--lose)}
+.controls{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;align-items:center}
+.chip{width:54px;height:54px;border-radius:50%;font-family:var(--mono);font-weight:700;color:#fff;cursor:pointer;font-size:.85rem;border:0;transition:transform .12s;
+  background:radial-gradient(circle,var(--cc) 0 52%,transparent 53%),repeating-conic-gradient(var(--cc) 0 22.5deg,#fff 22.5deg 45deg);box-shadow:0 3px 0 #0007,inset 0 0 0 3px #0003}
+.chip:hover{transform:translateY(-3px)} .chip:disabled{opacity:.3;transform:none;cursor:default}
+.pend{font-family:var(--mono);color:var(--gold);font-size:1rem;min-width:110px;text-align:center}
+.raise{display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:center}
+.raise input{width:110px;flex:none}
+.side{display:flex;flex-direction:column;gap:16px;min-width:0}
+.lb{display:flex;flex-direction:column;gap:8px;margin:0;padding:0;list-style:none}
+.lb li{display:flex;align-items:center;gap:10px;font-size:.9rem}
+.lb .rk{font-family:var(--mono);color:var(--muted);width:18px}
+.lb .n{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lb .v{font-family:var(--mono);color:var(--gold)}
+.chat{height:230px;overflow-y:auto;display:flex;flex-direction:column;gap:7px;font-size:.9rem;padding-right:4px}
+.chat p{margin:0;line-height:1.4;overflow-wrap:anywhere}
+.chat b{color:var(--gold)} .chat .mine b{color:var(--win)}
+.rules{font-size:.88rem;line-height:1.6;color:var(--muted);margin:0;padding-left:18px}
+.rules b{color:var(--ink)}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%) translateY(30px);opacity:0;z-index:20;
+  background:#081611f0;border:1px solid var(--gold);color:var(--ink);padding:12px 20px;border-radius:999px;font-weight:800;box-shadow:0 12px 30px #000c;transition:all .35s;pointer-events:none;max-width:calc(100% - 32px);text-align:center}
+.toast.show{opacity:1;transform:translateX(-50%)}
+@media (max-width:480px){h1{font-size:1.6rem}.mark{width:40px;height:40px}.c{width:56px;height:82px;margin-left:-26px}.hand{padding-left:26px;min-height:86px}
+  .seats{grid-template-columns:repeat(2,minmax(0,1fr))}.seat .c{width:42px;height:62px;margin-left:-20px}.seat .hand{padding-left:20px;min-height:64px}.seat .c .mid{font-size:1.2rem}
+  .myhand .c{width:50px;height:74px;margin-left:-28px}.myhand .hand{padding-left:28px}.board .c{width:50px;height:74px}.board{gap:5px}}
+@media (prefers-reduced-motion:reduce){.c.new{animation:none}.chip,.c.pick,.fan .c,.toast{transition:none}}
+</style>
+</head><body>
+
+<div class="wrap">
+  <header>
+    <div class="brand"><div class="mark" aria-hidden="true">♠</div><div><h1>Хөзрийн Танхим</h1><p class="tag">Найзуудын хөзрийн клуб</p></div></div>
+    <div class="me" id="mebox" hidden><div class="av" id="meav"></div><span id="whoami"></span><button class="btn alt sm" id="renick">Солих</button></div>
+  </header>
+
+  <section class="notice" id="notice">Ачаалж байна…</section>
+
+  <section class="glass" id="nickv" hidden style="max-width:520px">
+    <span class="eyebrow">Тавтай морил</span>
+    <h2>Ширээнд чамайг хэн гэж дуудах вэ?</h2>
+    <form class="row" id="nickf"><input type="text" id="nickin" maxlength="18" placeholder="Жишээ: Бат" autocomplete="off"><button class="btn" type="submit">Орох</button></form>
+  </section>
+
+  <section id="lobby" hidden style="display:flex;flex-direction:column;gap:22px">
+    <div class="hero">
+      <div style="display:flex;flex-direction:column;gap:12px">
+        <span class="eyebrow">Блэкжек · 13 · Покер</span>
+        <h2>Найзуудаа дуудаад <em>нэг ширээнд</em> суу.</h2>
+        <p>Ширээ нээгээд найзууддаа хэл. Бүгд нэг дор тоглож, чатлаж, хэн хамгийн их чип хурааж байгааг харна. Жинхэнэ мөнгө байхгүй, зөвхөн чип.</p>
+      </div>
+      <div class="glass">
+        <h3>Найзаа хэрхэн урих вэ</h3>
+        <ol class="steps"><li>Доороос тоглоомоо сонгоод <b>ширээ нээ</b>.</li><li>Ширээн дээрх <b>«Холбоос хуулах»</b>-ыг дар.</li><li>Холбоосоо найздаа явуул. Бүртгэл хэрэггүй, шууд орно.</li></ol>
+      </div>
+    </div>
+    <div class="glass">
+      <div class="row" style="justify-content:space-between"><h3>Шинэ ширээ</h3></div>
+      <input type="text" id="newname" maxlength="24" placeholder="Ширээний нэр (заавал биш), жишээ: Баасан орой" autocomplete="off">
+      <div class="games" id="games"></div>
+    </div>
+    <div class="glass">
+      <h3>Нээлттэй ширээнүүд</h3>
+      <div class="tables" id="tables"><p class="empty">Ачаалж байна…</p></div>
+    </div>
+  </section>
+
+  <section id="table" hidden>
+    <div class="game">
+      <div class="rail"><div class="felt">
+        <div class="tophead">
+          <button class="btn alt sm" id="back">← Лобби</button>
+          <h2 id="tname"></h2>
+          <span class="row" style="gap:8px"><span class="pill" id="tround"></span><button class="btn alt sm" id="copy">Холбоос хуулах</button></span>
+        </div>
+        <div class="center" id="center"></div>
+        <p class="msg" id="msg"></p>
+        <div class="seats" id="seats"></div>
+        <div class="myhand" id="myhand" hidden>
+          <div class="hand" id="mh"></div>
+          <div class="hint" id="hint"></div>
+        </div>
+
+        <div class="controls" id="prepUI">
+          <span id="chips" class="controls">
+            <button class="chip" style="--cc:#2f6fb5" data-v="10" id="c10">10</button>
+            <button class="chip" style="--cc:#2e9a5a" data-v="25" id="c25">25</button>
+            <button class="chip" style="--cc:#c4472f" data-v="50" id="c50">50</button>
+            <button class="chip" style="--cc:#26262b" data-v="100" id="c100">100</button>
+            <span class="pend" id="pend">0</span>
+            <button class="btn alt" id="clr">Цэвэрлэх</button>
+          </span>
+          <button class="btn" id="ready">Бэлэн</button>
+          <button class="btn alt" id="unready" hidden>Бэлэн биш</button>
+          <button class="btn" id="deal">Эхлүүлэх</button>
+        </div>
+        <div class="controls" id="bjUI" hidden>
+          <button class="btn" id="hit">Авах</button>
+          <button class="btn" id="stand">Зогсох</button>
+          <button class="btn alt" id="dbl">Давхарлах ×2</button>
+        </div>
+        <div class="controls" id="tlUI" hidden>
+          <button class="btn" id="tplay">Хаях</button>
+          <button class="btn alt" id="tpass">Өнжих</button>
+          <button class="btn alt sm" id="tclear">Сонголт арилгах</button>
+        </div>
+        <div class="controls" id="pkUI" hidden>
+          <button class="btn red" id="pfold">Хаях</button>
+          <button class="btn" id="pcall">Дагах</button>
+          <div class="raise">
+            <input type="number" id="pamt" min="0" step="10" aria-label="Өсгөх дүн">
+            <button class="btn alt sm" data-q="min">Мин</button>
+            <button class="btn alt sm" data-q="half">½ Пот</button>
+            <button class="btn alt sm" data-q="pot">Пот</button>
+            <button class="btn alt sm" data-q="all">Бүгд</button>
+            <button class="btn" id="praise">Өсгөх</button>
+          </div>
+        </div>
+        <div class="controls" id="skipUI" hidden><button class="btn alt" id="skip">Удаж байна, алгасах</button></div>
+      </div></div>
+
+      <aside class="side">
+        <div class="glass"><h3>Чат</h3>
+          <div class="chat" id="chat"></div>
+          <form class="row" id="chatf"><input type="text" id="chatin" maxlength="200" placeholder="Мессеж бичих…" autocomplete="off"><button class="btn sm" type="submit">Илгээх</button></form>
+        </div>
+        <div class="glass"><h3>Чипийн жагсаалт</h3><ol class="lb" id="lb"></ol></div>
+        <div class="glass"><h3 id="rtitle">Дүрэм</h3><ul class="rules" id="rules"></ul></div>
+      </aside>
+    </div>
+  </section>
+</div>
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const CARD=/^(A|[2-9]|10|J|Q|K)[SHDC]$|^BK$/,SYM={S:"♠",H:"♥",D:"♦",C:"♣"};
+const G={
+  bj:{name:"Блэкжек",min:1,max:7,minBal:10,pl:"1–7 хүн",desc:"Хөзрөө 21-д ойртуулж диллерийг ял. Блэкжек гарвал ×1.5 хожно.",fan:["AS","KH","10D"],
+    rules:["Оноогоо <b>21</b>-д ойртуул, хэтэрвэл шатна.","J Q K = 10, A = 1 эсвэл 11.","Блэкжек (A+10) ×1.5 хожно.","Диллер 17 хүртэл заавал авна.","30 секунд хөдлөхгүй бол автоматаар зогсоно."]},
+  tl:{name:"13",min:2,max:4,minBal:10,pl:"2–4 хүн",desc:"Хүн бүр 13 хөзөр авна. Хөзрөө хамгийн түрүүнд дуусгасан нь ялна.",fan:["3S","2H","KD"],
+    rules:["Эрэмбэ: <b>3 &lt; 4 … K &lt; A &lt; 2</b>. Дүрс: ♠ &lt; ♣ &lt; ♦ &lt; ♥.","Ганц, хос, гурвал, 3+ дараалал, каре хаяж болно.","Ширээн дээрхээс ижил төрлийн, ижил тооны, илүү өндөр хөзөр хаяна.","Каре эсвэл 3 дараалсан хос нь ганц 2-ыг дарна.","Ялагч бусдын үлдсэн хөзөр бүрээс <b>10 чип</b> авна."]},
+  pk:{name:"Покер",min:2,max:8,minBal:20,pl:"2–8 хүн",desc:"Техас Холдем. 2 хөзөр гартаа, 5 ширээн дээр. Блайнд 10/20.",fan:["AH","AD","KS"],
+    rules:["Гартаа 2, ширээн дээр 5 хөзөр. Шилдэг 5 хөзрийн хослол ялна.","Блайнд <b>10/20</b>. Хаях, дагах, өсгөх боломжтой.","Флоп (3), Тёрн (1), Ривер (1) гэсэн дарааллаар нээгдэнэ.","Хүч: Стрит флаш &gt; Каре &gt; Фулл хаус &gt; Нэг өнгө &gt; Дараалал &gt; Гурвал &gt; 2 хос &gt; Хос."]}
+};
+const HN=["Өндөр хөзөр","Хос","Хоёр хос","Гурвал","Дараалал","Нэг өнгө","Фулл хаус","Каре","Стрит флаш"];
+
+let ws=null,me=null,nick="",token="",tid=null,T=null,seats={},online=new Set(),skew=0;
+let pend=0,sel=new Set(),lastToast="",wantTable=null,lobbyList=null;
+const prev={};
+try{nick=localStorage.getItem("hz-nick")||"";token=localStorage.getItem("hz-token")||""}catch{}
+if(token.length<16){token=[...crypto.getRandomValues(new Uint8Array(16))].map(b=>b.toString(16).padStart(2,"0")).join("");try{localStorage.setItem("hz-token",token)}catch{}}
+
+const hue=s=>{let h=0;for(const ch of String(s))h=(h*31+ch.charCodeAt(0))>>>0;return h%360};
+const avatar=(id,n,cls="")=>`<div class="av ${cls}" style="background:hsl(${hue(id)} 70% 68%)">${esc((n||"?").trim().charAt(0).toUpperCase())}</div>`;
+function show(v){for(const id of ["notice","nickv","lobby","table"])$(id).hidden=id!==v}
+function note(html){$("notice").innerHTML=html;show("notice")}
+function toast(t){const el=$("toast");el.textContent=t;el.classList.add("show");clearTimeout(toast.t);toast.t=setTimeout(()=>el.classList.remove("show"),3200)}
+const tx=m=>{if(ws&&ws.readyState===1){ws.send(JSON.stringify(m));return true}toast("Холболт тасарсан, дахин холбогдож байна…");return false};
+
+/* ---------- cards ---------- */
+function face(c,cls="",st=""){const r=c.slice(0,-1),s=c.slice(-1),col=(s==="H"||s==="D")?"red":"blk";
+  return `<div class="c ${col} ${cls}"${st}><div class="tl">${r}<br>${SYM[s]}</div><div class="mid">${SYM[s]}</div></div>`}
+function cardsHTML(cards,key,hide=-1,extra){
+  const list=(cards||[]).filter(c=>CARD.test(c)),p=prev[key]||0;prev[key]=list.length;
+  return list.map((c,i)=>{const isNew=i>=p,cls=(isNew?"new ":"")+(extra?extra(c):""),st=isNew?` style="animation-delay:${(i-p)*.07}s"`:"";
+    return (c==="BK"||hide==="all"||i===hide)?`<div class="c back ${cls}"${st}></div>`:face(c,cls,st)}).join("")}
+
+/* ---------- connection ---------- */
+function connect(){
+  const url=(location.protocol==="https:"?"wss://":"ws://")+location.host;
+  ws=new WebSocket(url);
+  ws.onopen=()=>tx({type:"hello",token,nick:nick||"Тоглогч"});
+  ws.onmessage=e=>{let m;try{m=JSON.parse(e.data)}catch{return}on(m)};
+  ws.onclose=()=>{ws=null;if(!$("table").hidden||!$("lobby").hidden)toast("Холболт тасарлаа, дахин холбогдож байна…");setTimeout(connect,1500)};
+}
+function on(m){
+  if(m.type==="welcome"){me=m.id;if(!nick)askNick();else route();return}
+  if(m.type==="tables"){lobbyList=m.list;renderLobby();return}
+  if(m.type==="created"){location.hash="t-"+m.id;return}
+  if(m.type==="err"){toast(m.m);if(m.gone){location.hash="";openLobby()}return}
+  if(m.type==="chatlog"){$("chat").innerHTML="";if(!m.list.length)$("chat").innerHTML=`<p class="empty">Энэ ширээнд байгаа хүмүүс энд бичнэ.</p>`;m.list.forEach(x=>addChat(x.n,x.t,x.from===me));return}
+  if(m.type==="chat"){addChat(m.n,m.t,m.from===me);return}
+  if(m.type==="state"&&m.tid===tid){T=m.T;seats=m.seats;online=new Set(m.online);skew=Date.now()-m.now;render()}
+}
+
+/* ---------- nick / routing ---------- */
+function askNick(){$("nickin").value=nick;show("nickv");$("nickin").focus()}
+function setMe(){$("mebox").hidden=false;$("whoami").textContent=nick;$("meav").outerHTML=avatar(me,nick).replace('class="av ','id="meav" class="av ')}
+$("renick").onclick=()=>askNick();
+$("nickf").onsubmit=e=>{e.preventDefault();const v=$("nickin").value.trim().slice(0,18);if(!v)return;nick=v;
+  try{localStorage.setItem("hz-nick",v)}catch{}tx({type:"nick",nick});route()};
+function route(){if(!me||!nick)return;setMe();const m=location.hash.match(/^#t-([a-z0-9]{4,12})$/);m?openTable(m[1]):openLobby()}
+window.addEventListener("hashchange",route);
+
+/* ---------- lobby ---------- */
+function renderTiles(){
+  $("games").innerHTML=Object.entries(G).map(([k,g])=>`<div class="game-tile">
+    <div class="fan" aria-hidden="true">${g.fan.map(c=>face(c)).join("")}</div>
+    <span class="pill">${g.pl}</span><h3>${g.name}</h3><p>${g.desc}</p>
+    <button class="btn" data-game="${k}">${g.name} ширээ нээх</button></div>`).join("");
+  $("games").querySelectorAll("[data-game]").forEach(b=>b.onclick=()=>{const g=b.dataset.game;tx({type:"create",game:g,name:$("newname").value.trim().slice(0,24)||G[g].name+" ширээ"});$("newname").value=""});
+}
+function openLobby(){if(tid){tx({type:"leave"});tid=null;T=null;seats={}}show("lobby");tx({type:"list"});renderLobby()}
+function renderLobby(){const el=$("tables");if(!lobbyList){el.innerHTML=`<p class="empty">Ачаалж байна…</p>`;return}
+  if(!lobbyList.length){el.innerHTML=`<p class="empty">Одоохондоо ширээ алга. Дээрээс тоглоомоо сонгоод эхний ширээгээ нээ.</p>`;return}
+  el.innerHTML=lobbyList.map(t=>{const g=G[t.game]||G.bj,st=t.phase==="play"?"Тоглож байна":"Хүлээж байна";
+    return `<button class="tbl" data-id="${esc(t.id)}"><span class="pill">${g.name}</span><b>${esc(t.name)}</b><small>${t.online} хүн · ${st} · ${t.round}-р тойрог</small></button>`}).join("");
+  el.querySelectorAll(".tbl").forEach(b=>b.onclick=()=>{location.hash="t-"+b.dataset.id})}
+
+/* ---------- table ---------- */
+function openTable(id){
+  show("table");if(tid===id&&T)return;
+  tid=id;T=null;seats={};pend=0;sel=new Set();
+  $("msg").textContent="Ачаалж байна…";$("center").innerHTML="";$("seats").innerHTML="";$("chat").innerHTML="";
+  tx({type:"join",tid:id});
+}
+function addChat(n,t,mine){if(typeof t!=="string"||!t)return;const c=$("chat");c.querySelector(".empty")?.remove();
+  const p=document.createElement("p");if(mine)p.className="mine";const b=document.createElement("b");b.textContent=String(n||"Хэн нэгэн").slice(0,18)+": ";
+  p.append(b,document.createTextNode(t.slice(0,200)));c.append(p);while(c.children.length>60)c.firstChild.remove();c.scrollTop=c.scrollHeight}
+$("chatf").onsubmit=e=>{e.preventDefault();const t=$("chatin").value.trim();if(!t)return;if(tx({type:"chat",t}))$("chatin").value=""};
+$("back").onclick=()=>{location.hash=""};
+$("copy").onclick=()=>{const url=location.href;navigator.clipboard?.writeText(url).then(()=>toast("Холбоос хуулагдлаа. Найздаа явуул!")).catch(()=>prompt("Энэ холбоосыг хуулж аваарай:",url))};
+
+const nm=u=>seats[u]?.nick||"Тоглогч";
+const gameOf=()=>G[T?.game]?T.game:"bj";
+function seatHTML(u,{turn,out,body,meta,status,badges=""}){
+  return `<div class="seat${turn?" turn":""}${u===me?" mine":""}${out?" out":""}">
+    <div class="plate">${avatar(u,nm(u),online.has(u)?"on":"")}<span class="nick">${esc(nm(u))}${u===me?" (чи)":""}</span><span class="badges">${badges}</span></div>
+    ${body||""}<div class="meta">${meta||""}</div>${status||""}</div>`}
+const resHTML=x=>x?`<span class="res ${x.d>0?"win":x.d<0?"lose":"push"}">${esc(x.t)}</span>`:"";
+const now=()=>Date.now()-skew;
+
+function render(){
+  if(!T||$("table").hidden)return;
+  const g=gameOf(),r=T.round||0,play=T.phase==="play",my=seats[me],bal=my?.bal??0;
+  $("tname").textContent=T.name||"Ширээ";$("tround").textContent=G[g].name+(r?" · "+r+"-р тойрог":"");
+  document.title=(T.name||"Ширээ")+" · Хөзрийн Танхим";
+  $("rtitle").textContent=G[g].name+" дүрэм";$("rules").innerHTML=G[g].rules.map(x=>`<li>${x}</li>`).join("");
+  const order=(play||T.phase==="done")&&Array.isArray(T.order)?T.order:[];
+  const turnU=play?order[T.turn]:null;
+  const waiting=Object.keys(seats).filter(u=>!order.includes(u)&&(u===me||online.has(u)));
+  const readyTag=u=>seats[u]?.readyFor===r+1?`<span class="res push">Бэлэн${g==="bj"?" · "+seats[u].bet:""}</span>`:"";
+  ({bj:renderBJ,tl:renderTL,pk:renderPK})[g](order,turnU,waiting,readyTag);
+  $("prepUI").hidden=play;$("chips").hidden=g!=="bj";
+  const iAmReady=my?.readyFor===r+1;
+  for(const v of [10,25,50,100])$("c"+v).disabled=pend+v>bal||iAmReady;
+  $("pend").textContent=iAmReady&&g==="bj"?"Тавьсан: "+my.bet:"Бооцоо: "+pend;$("clr").disabled=!pend||iAmReady;
+  $("ready").hidden=iAmReady;$("unready").hidden=!iAmReady;
+  $("ready").textContent=g==="bj"?"Бооцоо тавих":"Тоглоход бэлэн";
+  $("ready").disabled=g==="bj"?(!pend||pend>bal):bal<G[g].minBal;
+  const readyN=Object.entries(seats).filter(([u,s])=>online.has(u)&&s.readyFor===r+1&&(g!=="bj"||s.bet>0)).length;
+  $("deal").disabled=readyN<G[g].min;$("deal").textContent=readyN<G[g].min?`Эхлүүлэх (${readyN}/${G[g].min})`:`Эхлүүлэх (${Math.min(readyN,G[g].max)} хүн)`;
+  $("bjUI").hidden=!(play&&g==="bj"&&turnU===me);$("tlUI").hidden=!(play&&g==="tl"&&turnU===me);$("pkUI").hidden=!(play&&g==="pk"&&turnU===me);
+  skipVis();
+  if(play&&turnU===me)({bj:ctlBJ,tl:ctlTL,pk:ctlPK})[g](bal);
+  $("lb").innerHTML=Object.entries(seats).sort((a,b)=>(b[1].bal||0)-(a[1].bal||0)).slice(0,10)
+    .map(([u,s],i)=>`<li><span class="rk">${i+1}</span>${avatar(u,s.nick)}<span class="n">${esc(s.nick||"Тоглогч")}${u===me?" (чи)":""}</span><span class="v">${s.bal??0}</span></li>`).join("");
+  const x=T.phase==="done"&&T.results?.[me];const key=tid+":"+r;
+  if(x&&lastToast!==key){lastToast=key;toast(x.t)}
+}
+function skipVis(){const t=T?.phase==="play"?T.order?.[T.turn]:null;$("skipUI").hidden=!(t&&t!==me&&now()-(T.turnAt||0)>30000)}
+setInterval(()=>{if(T&&!$("table").hidden)skipVis()},1000);
+
+/* ---------- prep ---------- */
+document.querySelectorAll(".chip").forEach(b=>b.onclick=()=>{pend+=+b.dataset.v;render()});
+$("clr").onclick=()=>{pend=0;render()};
+$("ready").onclick=()=>{if(tx({type:"ready",bet:pend}))pend=0};
+$("unready").onclick=()=>tx({type:"unready"});
+$("deal").onclick=()=>tx({type:"start"});
+$("skip").onclick=()=>tx({type:"skip"});
+const act=(a,extra={})=>tx({type:"act",a,...extra});
+
+/* ================= BLACKJACK ================= */
+function bjVal(h){let t=0,a=0;for(const c of h||[]){if(c==="BK")continue;const r=c.slice(0,-1);if(r==="A"){a++;t+=11}else t+=isNaN(r)?10:+r}while(t>21&&a){t-=10;a--}return t}
+function renderBJ(order,turnU,waiting,readyTag){
+  const r=T.round||0,play=T.phase==="play",dealer=Array.isArray(T.dealer)?T.dealer:[];
+  $("center").innerHTML=`<div class="label">Диллер <span class="score">${dealer.length?(play?bjVal([dealer[0]])+" + ?":bjVal(dealer)):"–"}</span></div>
+    <div class="hand">${dealer.length?cardsHTML(dealer,`${r}:d:${play}`):'<div class="c slot"></div><div class="c slot" style="margin-left:8px"></div>'}</div>`;
+  $("seats").innerHTML=[...order,...waiting].map(u=>{const inH=order.includes(u),h=inH?(T.hands?.[u]||[]):[];
+    return seatHTML(u,{turn:u===turnU,body:inH?`<div class="hand">${cardsHTML(h,`${r}:${u}`)}</div>`:"",
+      meta:(h.length?"Оноо "+bjVal(h)+" · ":"")+(inH?"Бооцоо "+(T.bets?.[u]||0)+" · ":"")+"Чип "+(seats[u]?.bal??"–"),
+      status:T.phase==="done"&&inH?resHTML(T.results?.[u]):u===turnU?'<span class="res push">Ээлж</span>':inH?"":readyTag(u)})}).join("");
+  $("myhand").hidden=true;
+  $("msg").textContent=play?(turnU===me?"Чиний ээлж: авах уу, зогсох уу?":nm(turnU)+" бодож байна…"):T.phase==="done"?(T.results?.[me]?.t||"Тойрог дууслаа"):"Бооцоо тавиад «Эхлүүлэх» дар";
+}
+function ctlBJ(bal){const h=T.hands?.[me]||[];$("dbl").disabled=h.length!==2||bal<2*(T.bets?.[me]||0)}
+$("hit").onclick=()=>act("hit");$("stand").onclick=()=>act("stand");$("dbl").onclick=()=>act("dbl");
+
+/* ================= 13 ================= */
+const TR=["3","4","5","6","7","8","9","10","J","Q","K","A","2"],TS="SCDH";
+const tr=c=>TR.indexOf(c.slice(0,-1)),tv=c=>tr(c)*4+TS.indexOf(c.slice(-1));
+const TLN={single:"Ганц",pair:"Хос",triple:"Гурвал",four:"Каре",straight:"Дараалал",pairs:"Дараалсан хос"};
+function combo(cards){const cs=[...cards].sort((a,b)=>tv(a)-tv(b)),n=cs.length;if(!n)return null;const rs=cs.map(tr),top=tv(cs[n-1]),same=rs.every(x=>x===rs[0]);
+  const consec=a=>a.every((x,i)=>i===0||x===a[i-1]+1);
+  if(n===1)return{t:"single",n,top};if(same&&n===2)return{t:"pair",n,top};if(same&&n===3)return{t:"triple",n,top};if(same&&n===4)return{t:"four",n,top};
+  if(n>=3&&!rs.includes(12)&&consec(rs))return{t:"straight",n,top};
+  if(n>=6&&n%2===0&&!rs.includes(12)){const pr=[];for(let i=0;i<n;i+=2){if(rs[i]!==rs[i+1])return null;pr.push(rs[i])}if(consec(pr))return{t:"pairs",n,top}}
+  return null}
+function beats(a,p){if(!p)return true;
+  if(p.t==="single"&&p.top>=48&&(a.t==="four"||a.t==="pairs"))return true;
+  if(p.t==="pair"&&p.top>=48&&(a.t==="four"||(a.t==="pairs"&&a.n>=8)))return true;
+  if(p.t==="four"&&a.t==="pairs"&&a.n>=8)return true;
+  return a.t===p.t&&a.n===p.n&&a.top>p.top}
+function renderTL(order,turnU,waiting,readyTag){
+  const r=T.round||0,play=T.phase==="play",pile=T.pile;
+  $("center").innerHTML=pile?`<div class="label">${esc(nm(pile.by))} · ${TLN[pile.t]||""}</div><div class="hand">${cardsHTML(pile.cards,`${r}:pile:${pile.cards.join("")}`)}</div>`
+    :`<div class="label">${play?"Шинэ эргэлт":"Ширээ"}</div><div class="hand"><div class="c slot"></div></div>`;
+  $("seats").innerHTML=[...order,...waiting].map(u=>{const inH=order.includes(u),left=inH?(T.hands?.[u]?.length||0):0;
+    const showCards=T.phase==="done"&&inH&&left;
+    return seatHTML(u,{turn:u===turnU,out:play&&T.passed?.[u],
+      body:inH?(showCards?`<div class="hand">${cardsHTML(T.hands[u],`${r}:end:${u}`)}</div>`:`<div class="mini"><i></i>× ${left}</div>`):"",
+      meta:"Чип "+(seats[u]?.bal??"–"),
+      status:T.phase==="done"&&inH?resHTML(T.results?.[u]):u===turnU?'<span class="res push">Ээлж</span>':(play&&T.passed?.[u])?'<span class="meta">Өнжсөн</span>':inH?"":readyTag(u)})}).join("");
+  const mine=order.includes(me)&&play?(T.hands?.[me]||[]).filter(c=>c!=="BK"):[];
+  $("myhand").hidden=!mine.length;
+  if(mine.length){[...sel].forEach(c=>{if(!mine.includes(c))sel.delete(c)});
+    $("mh").className="hand";
+    $("mh").innerHTML=cardsHTML(mine,`${r}:mh`,-1,c=>"pick"+(sel.has(c)?" sel":""));
+    $("mh").querySelectorAll(".c").forEach((el,i)=>{const c=mine[i];el.tabIndex=0;el.setAttribute("role","button");
+      const tog=()=>{sel.has(c)?sel.delete(c):sel.add(c);render()};el.onclick=tog;el.onkeydown=e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();tog()}}});
+    tlHint()}
+  $("msg").textContent=play?(turnU===me?(pile?"Чиний ээлж: дарах уу, өнжих үү?":"Чиний ээлж: дуртай хөзрөө хая"):nm(turnU)+" бодож байна…"):T.phase==="done"?(T.results?.[me]?.t||"Тоглолт дууслаа"):"Бүгд бэлэн болоод «Эхлүүлэх» дар";
+}
+function tlHint(){const h=$("hint");if(!sel.size){h.textContent=T.order?.[T.turn]===me?"Хөзрөө дарж сонго":"";h.className="hint";return}
+  const cb=combo([...sel]);if(!cb){h.textContent="Энэ хослол буруу";h.className="hint bad";return}
+  const ok=beats(cb,T.pile);h.textContent=TLN[cb.t]+(ok?" · хаяж болно":" · ширээн дээрхийг дарахгүй");h.className="hint "+(ok?"ok":"bad")}
+function ctlTL(){const cb=combo([...sel]);$("tplay").disabled=!cb||!beats(cb,T.pile);$("tpass").disabled=!T.pile;$("tclear").disabled=!sel.size}
+$("tclear").onclick=()=>{sel.clear();render()};
+$("tplay").onclick=()=>{const cards=[...sel];if(act("play",{cards}))sel.clear()};
+$("tpass").onclick=()=>{if(act("pass"))sel.clear()};
+
+/* ================= POKER ================= */
+const PV=c=>{const r=c.slice(0,-1);return r==="A"?14:r==="K"?13:r==="Q"?12:r==="J"?11:+r};
+function ev5(cs){const v=cs.map(PV).sort((a,b)=>b-a),s=cs.map(c=>c.slice(-1)),fl=s.every(x=>x===s[0]),cnt={};v.forEach(x=>cnt[x]=(cnt[x]||0)+1);
+  const g=Object.entries(cnt).map(([k,n])=>[n,+k]).sort((a,b)=>b[0]-a[0]||b[1]-a[1]);let st=0;
+  if(g.length===5){if(v[0]-v[4]===4)st=v[0];else if(v[0]===14&&v[1]===5)st=5}
+  if(st&&fl)return[8,st];if(g[0][0]===4)return[7,g[0][1],g[1][1]];if(g[0][0]===3&&g[1][0]===2)return[6,g[0][1],g[1][1]];
+  if(fl)return[5,...v];if(st)return[4,st];if(g[0][0]===3)return[3,...g.map(x=>x[1])];
+  if(g[0][0]===2&&g[1][0]===2)return[2,...g.map(x=>x[1])];if(g[0][0]===2)return[1,...g.map(x=>x[1])];return[0,...v]}
+const cmp=(a,b)=>{for(let i=0;i<Math.max(a.length,b.length);i++){const d=(a[i]||0)-(b[i]||0);if(d)return d}return 0};
+function bestOf(cs){cs=cs.filter(c=>c!=="BK");if(cs.length<5)return null;let b=null;const combos=[];
+  const pick=(s,acc)=>{if(acc.length===5){combos.push(acc);return}for(let i=s;i<cs.length;i++)pick(i+1,[...acc,cs[i]])};pick(0,[]);
+  for(const h of combos){const e=ev5(h);if(!b||cmp(e,b)>0)b=e}return b}
+function renderPK(order,turnU,waiting,readyTag){
+  const r=T.round||0,play=T.phase==="play",board=Array.isArray(T.board)?T.board:[];
+  const pot=order.reduce((a,u)=>a+(T.contrib?.[u]||0),0);
+  const slots=Array.from({length:5-board.filter(c=>CARD.test(c)).length},()=>'<div class="c slot"></div>').join("");
+  $("center").innerHTML=`<div class="board">${cardsHTML(board,`${r}:board`)}${slots}</div>${order.length?`<span class="pot">Пот ${pot}</span>`:'<span class="label">Блайнд 10 / 20</span>'}`;
+  $("seats").innerHTML=[...order,...waiting].map(u=>{const inH=order.includes(u);
+    const stack=inH&&play?(T.stack0[u]-T.contrib[u]):(seats[u]?.bal??"–");
+    const bd=inH?[order[T.btn]===u?'<span class="bdg">D</span>':"",T.sb===u?'<span class="bdg alt">SB</span>':"",T.bb===u?'<span class="bdg alt">BB</span>':""].join(""):"";
+    return seatHTML(u,{turn:u===turnU,out:inH&&T.folded?.[u],badges:bd,
+      body:inH?`<div class="hand">${cardsHTML(T.hole?.[u],`${r}:h:${u}:${(T.hole?.[u]||[])[0]}`)}</div>`:"",
+      meta:"Чип "+stack+(inH&&T.bet?.[u]?" · Бооцоо "+T.bet[u]:""),
+      status:T.phase==="done"&&inH?resHTML(T.results?.[u]):u===turnU?'<span class="res push">Ээлж</span>':inH&&T.folded?.[u]?'<span class="meta">Хаясан</span>':inH&&T.allin?.[u]?'<span class="res push">Бүгдийг</span>':inH?"":readyTag(u)})}).join("");
+  const mine=order.includes(me)?(T.hole?.[me]||[]):[];
+  $("myhand").hidden=!mine.length||T.phase==="done";
+  if(mine.length){$("mh").className="hand center";$("mh").innerHTML=cardsHTML(mine,`${r}:pmh`);
+    const b=bestOf([...mine,...board]);$("hint").textContent=b?"Одоо чинь: "+HN[b[0]]:"Флоп нээгдэхийг хүлээ";$("hint").className="hint"+(b&&b[0]>0?" ok":"")}
+  const streets=["Префлоп","Флоп","Тёрн","Ривер"];
+  $("msg").textContent=play?(streets[T.street]+" · "+(turnU===me?"Чиний ээлж":nm(turnU)+" бодож байна…")):T.phase==="done"?(T.results?.[me]?.t||"Гар дууслаа"):"Бүгд бэлэн болоод «Эхлүүлэх» дар";
+}
+function ctlPK(){const u=me,toCall=T.cur-T.bet[u],rem=T.stack0[u]-T.contrib[u];
+  $("pcall").textContent=toCall>0?`Дагах ${Math.min(toCall,rem)}`:"Шалгах";
+  const minTo=Math.min(T.cur+T.minR,T.bet[u]+rem);const a=$("pamt");a.min=minTo;a.max=T.bet[u]+rem;
+  if(!a.value||+a.value<minTo||a.dataset.r!==T.round+":"+T.street+":"+T.cur){a.value=minTo;a.dataset.r=T.round+":"+T.street+":"+T.cur}
+  $("praise").disabled=rem<=toCall;$("praise").textContent=T.cur?"Өсгөх":"Бооцоо"}
+document.querySelectorAll("[data-q]").forEach(b=>b.onclick=()=>{if(!T||T.phase!=="play")return;const u=me,rem=T.stack0[u]-T.contrib[u],pot=T.order.reduce((a,x)=>a+T.contrib[x],0),max=T.bet[u]+rem;
+  const call=T.cur-T.bet[u];let v={min:T.cur+T.minR,half:T.cur+Math.round((pot+call)/2),pot:T.cur+pot+call,all:max}[b.dataset.q];$("pamt").value=Math.min(Math.max(v,T.cur+T.minR),max)});
+$("pfold").onclick=()=>act("fold");$("pcall").onclick=()=>act("call");$("praise").onclick=()=>act("raise",{to:Math.floor(+$("pamt").value||0)});
+
+renderTiles();
+note("Сервертэй холбогдож байна…");
+connect();
+</script>
+</body></html>
