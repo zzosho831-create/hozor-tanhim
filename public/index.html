@@ -160,6 +160,46 @@ input:focus{outline:none;border-color:var(--gold);box-shadow:0 0 0 3px #e3c27a33
 .toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%) translateY(30px);opacity:0;z-index:20;
   background:#081611f0;border:1px solid var(--gold);color:var(--ink);padding:12px 20px;border-radius:999px;font-weight:800;box-shadow:0 12px 30px #000c;transition:all .35s;pointer-events:none;max-width:calc(100% - 32px);text-align:center}
 .toast.show{opacity:1;transform:translateX(-50%)}
+/* wallet, bonuses, terms */
+.hdr-r{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.bal{display:flex;align-items:center;gap:8px;font-family:var(--mono);font-weight:700;font-size:.95rem;color:var(--gold);background:var(--glass);border:1px solid #e3c27a55;border-radius:999px;padding:6px 12px 6px 6px}
+.coin{width:22px;height:22px;border-radius:50%;flex:none;background:radial-gradient(circle,#c4472f 0 46%,transparent 47%),repeating-conic-gradient(#c4472f 0 22.5deg,#fff 22.5deg 45deg);box-shadow:0 2px 0 #0007}
+.gift{position:relative}
+.gift .dot{position:absolute;top:-3px;right:-3px;width:11px;height:11px;border-radius:50%;background:var(--red);box-shadow:0 0 0 2px var(--night);animation:pulse 1.6s infinite}
+@keyframes pulse{50%{transform:scale(1.35)}}
+.promo{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:16px;align-items:center;border-radius:20px;padding:16px 18px;border:1px solid #e3c27a66;
+  background:linear-gradient(110deg,#3a2a0e,#1c3a2c 55%,#0b1f19);box-shadow:0 10px 30px #0007}
+.promo .big{font-size:2.2rem;line-height:1}
+.promo b{font-family:var(--display);font-size:1.2rem;font-weight:600;display:block}
+.promo span{color:var(--muted);font-size:.88rem}
+@media (max-width:560px){.promo{grid-template-columns:auto minmax(0,1fr)}.promo .btn{grid-column:1/-1}}
+dialog{border:1px solid #e3c27a55;border-radius:24px;padding:0;background:#0a1d17;color:var(--ink);width:min(560px,calc(100% - 32px));max-height:calc(100% - 40px);box-shadow:0 30px 80px #000c}
+dialog::backdrop{background:#000a;backdrop-filter:blur(3px)}
+.dlg{padding:22px;display:flex;flex-direction:column;gap:16px}
+.dlg-h{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.xbtn{all:unset;cursor:pointer;width:34px;height:34px;border-radius:50%;display:grid;place-items:center;font-size:1.2rem;background:#ffffff12}
+.xbtn:focus-visible{outline:3px solid var(--ink)}
+.streak{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px}
+.day{border-radius:12px;padding:8px 2px;text-align:center;background:#ffffff0a;border:1px solid var(--line);display:flex;flex-direction:column;gap:3px;align-items:center}
+.day small{font-size:.62rem;color:var(--muted);letter-spacing:.06em}
+.day b{font-family:var(--mono);font-size:.8rem;color:var(--ink)}
+.day.got{background:#74e0a41a;border-color:#74e0a466}.day.got b{color:var(--win)}
+.day.now{border-color:var(--gold);box-shadow:0 0 0 3px #e3c27a2e;background:#e3c27a1a}.day.now b{color:var(--gold)}
+.day.last b{color:var(--turn)}
+.sect{display:flex;flex-direction:column;gap:10px;border-top:1px solid var(--line);padding-top:14px}
+.mis{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px 12px;align-items:center}
+.mis .t{font-weight:800;font-size:.92rem}
+.mis .t em{font-style:normal;font-family:var(--mono);color:var(--gold);font-weight:700;margin-left:6px}
+.bar{grid-column:1;height:7px;border-radius:99px;background:#ffffff14;overflow:hidden}
+.bar i{display:block;height:100%;background:linear-gradient(90deg,var(--gold-d),var(--gold));border-radius:inherit}
+.mis .btn{grid-row:1/3;grid-column:2}
+.terms{font-size:.9rem;line-height:1.65;color:var(--muted);display:flex;flex-direction:column;gap:12px}
+.terms h4{margin:0;color:var(--ink);font-size:.95rem}
+.terms ul{margin:0;padding-left:18px}.terms b{color:var(--ink)}
+.terms .warn{border:1px solid #ff8a8066;background:#ff8a8012;border-radius:14px;padding:12px 14px;color:var(--ink)}
+footer{display:flex;justify-content:center;gap:16px;flex-wrap:wrap;font-size:.82rem;color:var(--muted)}
+.link{all:unset;cursor:pointer;color:var(--gold);text-decoration:underline;text-underline-offset:3px}
+.link:focus-visible{outline:2px solid var(--ink)}
 @media (max-width:480px){h1{font-size:1.6rem}.mark{width:40px;height:40px}.c{width:56px;height:82px;margin-left:-26px}.hand{padding-left:26px;min-height:86px}
   .seats{grid-template-columns:repeat(2,minmax(0,1fr))}.seat .c{width:42px;height:62px;margin-left:-20px}.seat .hand{padding-left:20px;min-height:64px}.seat .c .mid{font-size:1.2rem}
   .myhand .c{width:50px;height:74px;margin-left:-28px}.myhand .hand{padding-left:28px}.board .c{width:50px;height:74px}.board{gap:5px}}
@@ -170,7 +210,11 @@ input:focus{outline:none;border-color:var(--gold);box-shadow:0 0 0 3px #e3c27a33
 <div class="wrap">
   <header>
     <div class="brand"><div class="mark" aria-hidden="true">♠</div><div><h1>Хөзрийн Танхим</h1><p class="tag">Найзуудын хөзрийн клуб</p></div></div>
-    <div class="me" id="mebox" hidden><div class="av" id="meav"></div><span id="whoami"></span><button class="btn alt sm" id="renick">Солих</button></div>
+    <div class="hdr-r">
+      <div class="bal" id="balbox" hidden title="Нийт чип"><span class="coin"></span><span id="balv">0</span></div>
+      <button class="btn sm gift" id="giftbtn" hidden>🎁 Урамшуулал<span class="dot" id="giftdot" hidden></span></button>
+      <div class="me" id="mebox" hidden><div class="av" id="meav"></div><span id="whoami"></span><button class="btn alt sm" id="renick">Солих</button></div>
+    </div>
   </header>
 
   <section class="notice" id="notice">Ачаалж байна…</section>
@@ -186,12 +230,17 @@ input:focus{outline:none;border-color:var(--gold);box-shadow:0 0 0 3px #e3c27a33
       <div style="display:flex;flex-direction:column;gap:12px">
         <span class="eyebrow">Блэкжек · 13 · Покер</span>
         <h2>Найзуудаа дуудаад <em>нэг ширээнд</em> суу.</h2>
-        <p>Ширээ нээгээд найзууддаа хэл. Бүгд нэг дор тоглож, чатлаж, хэн хамгийн их чип хурааж байгааг харна. Жинхэнэ мөнгө байхгүй, зөвхөн чип.</p>
+        <p>Ширээ нээгээд найзууддаа хэл. Бүгд нэг дор тоглож, чатлаж, хэн хамгийн их чип хурааж байгааг харна. Жинхэнэ мөнгө байхгүй, зөвхөн чип. Өдөр бүр үнэгүй урамшуулал.</p>
       </div>
       <div class="glass">
         <h3>Найзаа хэрхэн урих вэ</h3>
         <ol class="steps"><li>Доороос тоглоомоо сонгоод <b>ширээ нээ</b>.</li><li>Ширээн дээрх <b>«Холбоос хуулах»</b>-ыг дар.</li><li>Холбоосоо найздаа явуул. Бүртгэл хэрэггүй, шууд орно.</li></ol>
       </div>
+    </div>
+    <div class="promo" id="promo" hidden>
+      <div class="big" aria-hidden="true">🎁</div>
+      <div><b id="promot">Өдрийн урамшуулал бэлэн</b><span id="promos">Өдөр бүр орж ирээд чип ав. 7 хоног дараалбал 1500 чип.</span></div>
+      <button class="btn" id="promob">Авах</button>
     </div>
     <div class="glass">
       <div class="row" style="justify-content:space-between"><h3>Шинэ ширээ</h3></div>
@@ -268,8 +317,54 @@ input:focus{outline:none;border-color:var(--gold);box-shadow:0 0 0 3px #e3c27a33
       </aside>
     </div>
   </section>
+  <footer><button class="link" id="termsbtn">Үйлчилгээ ба төлбөрийн нөхцөл</button><span>Зөвхөн чип · Жинхэнэ мөнгө байхгүй</span></footer>
 </div>
 <div class="toast" id="toast" role="status"></div>
+
+<dialog id="bonusdlg" aria-labelledby="bonush"><div class="dlg">
+  <div class="dlg-h"><div><span class="eyebrow">Үнэгүй чип</span><h2 id="bonush">Урамшуулал</h2></div><button class="xbtn" data-close aria-label="Хаах">✕</button></div>
+  <div class="sect" style="border:0;padding:0">
+    <div class="row" style="justify-content:space-between"><h3>Өдрийн урамшуулал</h3><span class="pill" id="streakp"></span></div>
+    <div class="streak" id="streak"></div>
+    <button class="btn" id="dailyb">Авах</button>
+    <span class="muted" style="font-size:.8rem">Өдөр алгасвал 1-р өдрөөс дахин эхэлнэ. Шинэ өдөр Улаанбаатарын цагаар 00:00-д эхэлнэ.</span>
+  </div>
+  <div class="sect"><h3>Өнөөдрийн даалгавар</h3><div id="missions" style="display:flex;flex-direction:column;gap:14px"></div></div>
+  <div class="sect">
+    <div class="row" style="justify-content:space-between"><h3>Аврах чип</h3><span class="pill" id="rescuep"></span></div>
+    <span class="muted" style="font-size:.88rem" id="rescuet"></span>
+    <button class="btn alt" id="rescueb">Аврах чип авах</button>
+  </div>
+  <button class="link" id="termslink" style="align-self:center;font-size:.82rem">Урамшууллын нөхцөл</button>
+</div></dialog>
+
+<dialog id="termsdlg" aria-labelledby="termsh"><div class="dlg">
+  <div class="dlg-h"><div><span class="eyebrow">Хөзрийн Танхим</span><h2 id="termsh">Үйлчилгээ ба төлбөрийн нөхцөл</h2></div><button class="xbtn" data-close aria-label="Хаах">✕</button></div>
+  <div class="terms">
+    <div class="warn"><b>Энэ сайт бүрэн үнэгүй.</b> Бид ямар ч төлбөр авдаггүй, чип зардаггүй, чипийг мөнгө болгож буцаадаггүй. Сайтын нэрээр мөнгө нэхэж байгаа хүн бол <b>залилан</b>.</div>
+    <div><h4>1. Төлбөр</h4><ul>
+      <li>Бүртгэл, тоглоом, урамшуулал бүгд <b>0₮</b>.</li>
+      <li>Карт, QPay, банкны шилжүүлэг зэрэг ямар ч төлбөр хүлээж авахгүй.</li>
+      <li>Чипийг худалдах, худалдаж авах, тоглогч хооронд мөнгөөр солилцохыг хориглоно.</li></ul></div>
+    <div><h4>2. Чип</h4><ul>
+      <li>Чип нь зөвхөн тоглоомын оноо. <b>Мөнгөн үнэ цэнэгүй</b>, бэлэн мөнгө, бараа болгон солихгүй.</li>
+      <li>Чип таны хөтчийн түлхүүрт хадгалагдана. Хөтчийн өгөгдөл устгавал, эсвэл сервер шинэчлэгдвэл чип алга болж болно.</li>
+      <li>Шинэ тоглогч <b>2000</b> чиптэй эхэлнэ (1000 эхний + 1000 угтах урамшуулал).</li></ul></div>
+    <div><h4>3. Урамшуулал</h4><ul>
+      <li><b>Өдрийн урамшуулал:</b> өдөрт нэг удаа, 7 хоног дараалан: 200 · 300 · 400 · 500 · 700 · 900 · 1500.</li>
+      <li><b>Даалгавар:</b> өдөр бүр шинэчлэгдэнэ. Биелүүлээд гараар авна.</li>
+      <li><b>Аврах чип:</b> чип 100-аас доош орвол 500 чип, өдөрт 3 хүртэл удаа.</li>
+      <li>Олон хөтөч, хуурамч данс ашиглаж урамшууллыг давхар авахыг хориглоно. Ийм тохиолдолд чипийг хасах эрхтэй.</li>
+      <li>Урамшууллын хэмжээ, дүрмийг урьдчилан мэдэгдэлгүй өөрчилж болно.</li></ul></div>
+    <div><h4>4. Тоглоомын шударга байдал</h4><ul>
+      <li>Хөзрийг сервер санамсаргүйгээр холино, тоглогч бүр зөвхөн өөрийн хөзрийг харна.</li>
+      <li>30 секунд хөдлөхгүй бол автоматаар нүүдэл хийгдэнэ.</li>
+      <li>Чатад доромжлол, спам, сурталчилгаа бичихгүй.</li></ul></div>
+    <div><h4>5. Хариуцлагатай тоглох</h4><ul>
+      <li>Энэ бол найзуудын зугаа. Хэрэв мөрийтэй тоглоомд донтох хандлага байвал тоглохоо зогсоож, мэргэжлийн тусламж ав.</li></ul></div>
+  </div>
+  <button class="btn" data-close>Ойлголоо</button>
+</div></dialog>
 
 <script>
 const $=id=>document.getElementById(id);
@@ -286,7 +381,7 @@ const G={
 const HN=["Өндөр хөзөр","Хос","Хоёр хос","Гурвал","Дараалал","Нэг өнгө","Фулл хаус","Каре","Стрит флаш"];
 
 let ws=null,me=null,nick="",token="",tid=null,T=null,seats={},online=new Set(),skew=0;
-let pend=0,sel=new Set(),lastToast="",wantTable=null,lobbyList=null;
+let pend=0,sel=new Set(),lastToast="",wantTable=null,lobbyList=null,wallet=null;
 const prev={};
 try{nick=localStorage.getItem("hz-nick")||"";token=localStorage.getItem("hz-token")||""}catch{}
 if(token.length<16){token=[...crypto.getRandomValues(new Uint8Array(16))].map(b=>b.toString(16).padStart(2,"0")).join("");try{localStorage.setItem("hz-token",token)}catch{}}
@@ -297,6 +392,35 @@ function show(v){for(const id of ["notice","nickv","lobby","table"])$(id).hidden
 function note(html){$("notice").innerHTML=html;show("notice")}
 function toast(t){const el=$("toast");el.textContent=t;el.classList.add("show");clearTimeout(toast.t);toast.t=setTimeout(()=>el.classList.remove("show"),3200)}
 const tx=m=>{if(ws&&ws.readyState===1){ws.send(JSON.stringify(m));return true}toast("Холболт тасарсан, дахин холбогдож байна…");return false};
+
+/* ---------- wallet & bonuses ---------- */
+const fmt=n=>Number(n||0).toLocaleString("en-US").replace(/,/g," ");
+const missionReady=w=>w.missions.filter(x=>!x.got&&x.have>=x.need).length;
+function renderWallet(){const w=wallet;if(!w)return;
+  $("balbox").hidden=false;$("giftbtn").hidden=false;$("balv").textContent=fmt(w.bal);
+  const ready=(w.daily.can?1:0)+missionReady(w)+(w.rescue.can?1:0);$("giftdot").hidden=!ready;
+  $("promo").hidden=!ready;
+  if(ready){const parts=[];if(w.daily.can)parts.push(`өдрийн +${w.daily.list[w.daily.idx]}`);if(missionReady(w))parts.push(`${missionReady(w)} даалгавар`);if(w.rescue.can)parts.push(`аврах +${w.rescue.amt}`);
+    $("promot").textContent=w.daily.can?`${w.daily.idx+1}-р өдрийн урамшуулал бэлэн`:"Урамшуулал авах боломжтой";$("promos").textContent="Бэлэн: "+parts.join(" · ")}
+  // daily strip
+  const d=w.daily;$("streakp").textContent=d.streak?`${d.streak} өдөр дараалсан`:"Шинэ эхлэл";
+  $("streak").innerHTML=d.list.map((v,i)=>{const got=d.can?i<d.idx:i<=d.idx,now=d.can&&i===d.idx;
+    return `<div class="day${got?" got":""}${now?" now":""}${i===6?" last":""}"><small>${i+1}-р</small><span aria-hidden="true">${got?"✓":i===6?"👑":"🪙"}</span><b>${v}</b></div>`}).join("");
+  $("dailyb").disabled=!d.can;$("dailyb").textContent=d.can?`+${d.list[d.idx]} чип авах`:"Маргааш дахин ир";
+  $("missions").innerHTML=w.missions.map(x=>{const done=x.have>=x.need;
+    return `<div class="mis"><span class="t">${esc(x.t)}<em>+${x.amt}</em></span><button class="btn sm${done&&!x.got?"":" alt"}" data-claim="${esc(x.id)}"${!done||x.got?" disabled":""}>${x.got?"Авсан ✓":done?"Авах":`${x.have}/${x.need}`}</button>
+      <div class="bar"><i style="width:${Math.round(x.have/x.need*100)}%"></i></div></div>`}).join("");
+  $("missions").querySelectorAll("[data-claim]").forEach(b=>b.onclick=()=>tx({type:"claim",kind:b.dataset.claim}));
+  const r=w.rescue;$("rescuep").textContent=`Өнөөдөр ${r.left} үлдсэн`;
+  $("rescuet").textContent=`Чип ${r.below}-аас доош орвол ${r.amt} чип үнэгүй авна.`;
+  $("rescueb").disabled=!r.can;$("rescueb").textContent=r.can?`+${r.amt} чип авах`:w.bal<r.below?"Өнөөдрийн эрх дууссан":`Чип ${r.below}-аас бага үед`;
+}
+function openBonus(){tx({type:"wallet"});const d=$("bonusdlg");if(!d.open)d.showModal()}
+$("giftbtn").onclick=openBonus;$("promob").onclick=openBonus;
+$("dailyb").onclick=()=>tx({type:"claim",kind:"daily"});$("rescueb").onclick=()=>tx({type:"claim",kind:"rescue"});
+const openTerms=()=>{$("bonusdlg").open&&$("bonusdlg").close();$("termsdlg").showModal()};
+$("termsbtn").onclick=openTerms;$("termslink").onclick=openTerms;
+document.querySelectorAll("dialog").forEach(d=>{d.querySelectorAll("[data-close]").forEach(b=>b.onclick=()=>d.close());d.addEventListener("click",e=>{if(e.target===d)d.close()})});
 
 /* ---------- cards ---------- */
 function face(c,cls="",st=""){const r=c.slice(0,-1),s=c.slice(-1),col=(s==="H"||s==="D")?"red":"blk";
@@ -316,6 +440,8 @@ function connect(){
 }
 function on(m){
   if(m.type==="welcome"){me=m.id;if(!nick)askNick();else route();return}
+  if(m.type==="wallet"){const first=!wallet;wallet=m;renderWallet();if(first&&m.welcome)setTimeout(()=>{toast("Тавтай морил! Угтах урамшуулал +1000 чип");openBonus()},600);return}
+  if(m.type==="bonus"){toast("🎁 "+m.m);return}
   if(m.type==="tables"){lobbyList=m.list;renderLobby();return}
   if(m.type==="created"){location.hash="t-"+m.id;return}
   if(m.type==="err"){toast(m.m);if(m.gone){location.hash="";openLobby()}return}

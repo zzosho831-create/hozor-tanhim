@@ -9,6 +9,15 @@ const { WebSocketServer } = require("ws");
 const PORT = process.env.PORT || 3000;
 const INDEX = fs.readFileSync(path.join(__dirname, "public", "index.html"));
 const TURN_MS = 30000, BB = 20, SB = 10, TL_PAY = 10;
+const DATA = process.env.DATA_FILE || path.join(__dirname, "data", "wallets.json");
+/* Bonuses (chips only, no real money). Day boundaries follow Mongolia time (UTC+8). */
+const START = 1000, WELCOME = 1000, DAILY = [200, 300, 400, 500, 700, 900, 1500];
+const RESCUE = { amt: 500, below: 100, perDay: 3 };
+const MISSIONS = [
+  { id: "play5", t: "5 тойрог тогло", need: 5, amt: 300, of: m => m.played },
+  { id: "win3", t: "3 удаа ял", need: 3, amt: 400, of: m => m.won },
+  { id: "all3", t: "3 төрлийн тоглоом тогло", need: 3, amt: 500, of: m => m.games.length },
+];
 const G = { bj: { min: 1, max: 7, minBal: 10 }, tl: { min: 2, max: 4, minBal: 10 }, pk: { min: 2, max: 8, minBal: 20 } };
 
 const server = http.createServer((req, res) => {
@@ -20,6 +29,48 @@ const wss = new WebSocketServer({ server, maxPayload: 16 * 1024 });
 
 const tables = new Map(); // id -> {id,name,game,created,last,T,seats,chat}
 const clients = new Map(); // ws -> {id,nick,tid}
+
+/* ---------------- wallets & bonuses ---------------- */
+const wallets = new Map(); // id -> {bal, made, daily:{day,streak}, mis:{day,played,won,games,got}, rescue:{day,n}}
+let dirty = false;
+try { for (const [id, w] of Object.entries(JSON.parse(fs.readFileSync(DATA, "utf8")))) wallets.set(id, w); } catch {}
+function saveWallets() {
+  if (!dirty) return; dirty = false;
+  try { fs.mkdirSync(path.dirname(DATA), { recursive: true }); fs.writeFileSync(DATA + ".tmp", JSON.stringify(Object.fromEntries(wallets))); fs.renameSync(DATA + ".tmp", DATA); }
+  catch (e) { console.error("wallet save failed:", e.message); }
+}
+const dayKey = (t = Date.now()) => new Date(t + 8 * 3600e3).toISOString().slice(0, 10);
+function W(id) {
+  let w = wallets.get(id);
+  if (!w) { w = { bal: START + WELCOME, made: Date.now(), welcome: true, daily: { day: "", streak: 0 }, mis: null, rescue: { day: "", n: 0 } }; wallets.set(id, w); dirty = true; }
+  const d = dayKey();
+  if (!w.mis || w.mis.day !== d) w.mis = { day: d, played: 0, won: 0, games: [], got: [] };
+  if (w.rescue.day !== d) w.rescue = { day: d, n: 0 };
+  return w;
+}
+function walletView(id) {
+  const w = W(id), d = dayKey(), y = dayKey(Date.now() - 864e5);
+  const next = w.daily.day === y ? w.daily.streak % DAILY.length : 0; // index of the reward to claim next
+  return {
+    type: "wallet", bal: w.bal, day: d, welcome: !!w.welcome,
+    daily: { can: w.daily.day !== d, idx: w.daily.day === d ? (w.daily.streak - 1) % DAILY.length : next, streak: w.daily.day === d || w.daily.day === y ? w.daily.streak : 0, list: DAILY },
+    missions: MISSIONS.map(m => ({ id: m.id, t: m.t, need: m.need, amt: m.amt, have: Math.min(m.need, m.of(w.mis)), got: w.mis.got.includes(m.id) })),
+    rescue: { amt: RESCUE.amt, below: RESCUE.below, left: RESCUE.perDay - w.rescue.n, can: w.bal < RESCUE.below && w.rescue.n < RESCUE.perDay },
+  };
+}
+function claim(id, kind) {
+  const w = W(id), d = dayKey(), v = walletView(id);
+  if (kind === "daily") { if (!v.daily.can) return [0, "Өнөөдрийн урамшууллаа авсан байна"]; const amt = DAILY[v.daily.idx]; w.daily = { day: d, streak: v.daily.streak + 1 }; w.bal += amt; return [amt, `Өдрийн урамшуулал +${amt}`]; }
+  if (kind === "rescue") { if (!v.rescue.can) return [0, `Чип ${RESCUE.below}-аас бага үед л авна`]; w.rescue.n++; w.bal += RESCUE.amt; return [RESCUE.amt, `Аврах чип +${RESCUE.amt}`]; }
+  const m = MISSIONS.find(x => x.id === kind), mv = m && v.missions.find(x => x.id === kind);
+  if (!mv || mv.got || mv.have < mv.need) return [0, "Даалгавар биелээгүй байна"];
+  w.mis.got.push(m.id); w.bal += m.amt; return [m.amt, `«${m.t}» +${m.amt}`];
+}
+function pushWallet(id) { for (const [ws, c] of clients) if (c.id === id) send(ws, walletView(id)); }
+// Seats read and write the player's single wallet, so chips follow the player across tables.
+function mkSeat(id, nick) {
+  return { nick, bet: 0, readyFor: 0, at: Date.now(), get bal() { return W(id).bal; }, set bal(v) { W(id).bal = Math.max(0, Math.floor(v)); dirty = true; } };
+}
 
 /* ---------------- helpers ---------------- */
 const RANKS = ["A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"];
@@ -203,8 +254,12 @@ function actPK(st, u, m) {
 /* ---------------- table flow ---------------- */
 function settle(tb) {
   const T = tb.T; if (T.phase !== "done" || T.settled) return;
-  for (const [u, x] of Object.entries(T.results || {})) { const s = tb.seats[u]; if (!s) continue; s.bal += x.d; if (s.bal < 10) s.bal = 1000; }
-  T.settled = true;
+  for (const [u, x] of Object.entries(T.results || {})) {
+    const s = tb.seats[u]; if (!s) continue; s.bal += x.d;
+    const m = W(u).mis; m.played++; if (x.d > 0) m.won++; if (!m.games.includes(tb.game)) m.games.push(tb.game);
+  }
+  T.settled = true; dirty = true;
+  for (const u of Object.keys(T.results || {})) pushWallet(u);
 }
 function startRound(tb) {
   const T = tb.T, g = tb.game, r = (T.round || 0) + 1, on = new Set(onlineIds(tb));
@@ -252,13 +307,22 @@ wss.on("connection", ws => {
       const token = clean(m.token, 64); if (token.length < 16) return;
       c.id = "p" + crypto.createHash("sha256").update(token).digest("hex").slice(0, 14);
       c.nick = clean(m.nick, 18) || "Тоглогч";
-      send(ws, { type: "welcome", id: c.id }); send(ws, { type: "tables", list: tableList() }); return;
+      send(ws, { type: "welcome", id: c.id }); send(ws, walletView(c.id)); send(ws, { type: "tables", list: tableList() });
+      const w = W(c.id); if (w.welcome) { w.welcome = false; dirty = true; } return;
     }
     if (!c.id) return;
     const tb = c.tid ? tables.get(c.tid) : null;
     switch (m.type) {
       case "nick": c.nick = clean(m.nick, 18) || c.nick; if (tb && tb.seats[c.id]) { tb.seats[c.id].nick = c.nick; broadcast(tb); } break;
       case "list": send(ws, { type: "tables", list: tableList() }); break;
+      case "wallet": send(ws, walletView(c.id)); break;
+      case "claim": {
+        const [amt, t] = claim(c.id, clean(m.kind, 12));
+        if (amt) dirty = true;
+        send(ws, { type: amt ? "bonus" : "err", m: t, amt }); pushWallet(c.id);
+        for (const t2 of tables.values()) if (t2.seats[c.id]) broadcast(t2);
+        break;
+      }
       case "create": {
         if (tables.size >= 200) { send(ws, { type: "err", m: "Ширээ хэт олон байна, дараа оролд." }); break; }
         const game = G[m.game] ? m.game : "bj", id = crypto.randomBytes(4).toString("hex").slice(0, 6);
@@ -268,7 +332,7 @@ wss.on("connection", ws => {
       case "join": {
         const t = tables.get(clean(m.tid, 12)); if (!t) { send(ws, { type: "err", m: "Ийм ширээ алга.", gone: true }); break; }
         const old = c.tid && tables.get(c.tid); c.tid = t.id; t.last = Date.now();
-        if (!t.seats[c.id]) t.seats[c.id] = { nick: c.nick, bal: 1000, bet: 0, readyFor: 0, at: Date.now() };
+        if (!t.seats[c.id]) t.seats[c.id] = mkSeat(c.id, c.nick);
         else Object.assign(t.seats[c.id], { nick: c.nick, at: Date.now() });
         send(ws, { type: "chatlog", list: t.chat });
         if (old && old !== t) broadcast(old); broadcast(t); pushList(); break;
@@ -307,6 +371,8 @@ setInterval(() => {
   for (const [id, tb] of tables) if (!onlineIds(tb).length && Date.now() - tb.last > 6 * 3600e3) tables.delete(id);
   pushList();
 }, 60000);
+setInterval(saveWallets, 15000);
+for (const sig of ["SIGINT", "SIGTERM"]) process.on(sig, () => { dirty = true; saveWallets(); process.exit(0); });
 // Keep connections alive behind proxies.
 setInterval(() => { for (const ws of clients.keys()) if (ws.readyState === 1) ws.ping(); }, 25000);
 
