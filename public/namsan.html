@@ -1,0 +1,753 @@
+<!doctype html>
+<html lang="mn">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<title>Намсан цамхаг</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@700;900&family=Manrope:wght@500;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#1b1f2a;--paper:#ffffffe8;--muted:#5d6475;--line:#1b1f2a1f;--accent:#7c6cf0;--gold:#ffc93c;--shadow:0 10px 30px #0b12204d;--ui:"Manrope",system-ui,sans-serif;--ko:"Noto Sans KR",sans-serif}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--ink:#eef1f7;--paper:#161b26e8;--muted:#a2aabb;--line:#ffffff22}}
+:root[data-theme="dark"]{--ink:#eef1f7;--paper:#161b26e8;--muted:#a2aabb;--line:#ffffff22}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;overflow:hidden;background:#9fb4c6;font-family:var(--ui);color:var(--ink);touch-action:none;user-select:none;-webkit-user-select:none}
+canvas#c{position:fixed;inset:0;width:100%;height:100%;display:block;outline:none}
+button{font:inherit;color:inherit;cursor:pointer;border:0;background:none}
+.panel{background:var(--paper);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-radius:16px;box-shadow:var(--shadow);border:1px solid var(--line)}
+#hud{position:fixed;inset:0;pointer-events:none}
+#hud>*{pointer-events:auto}
+#card{position:absolute;left:max(12px,env(safe-area-inset-left));top:max(12px,env(safe-area-inset-top));padding:10px 14px;max-width:min(340px,calc(100vw - 24px))}
+#card .t{font-weight:800;font-size:17px;line-height:1.1}
+#card .t span{font-family:var(--ko);font-weight:900;margin-left:6px;color:var(--accent)}
+#card .s{font-size:12.5px;color:var(--muted);margin-top:6px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+#card .src{font-weight:800;border-radius:999px;padding:2px 9px;font-size:11.5px}
+#card .src.ok{background:#22a86122;color:#1c8a4f}
+#card .src.demo{background:#ffc93c33;color:#9a6a00}
+#card .note{font-size:12px;color:var(--muted);margin-top:6px;line-height:1.35}
+#card button{border:1.5px solid var(--line);border-radius:999px;padding:3px 10px;font-weight:800;font-size:12px}
+#emotes{position:absolute;right:max(12px,env(safe-area-inset-right));top:max(12px,env(safe-area-inset-top));display:flex;gap:6px;padding:6px}
+#emotes button{width:46px;height:46px;border-radius:12px;font-size:22px;display:grid;place-items:center;position:relative}
+#emotes button:hover,#emotes button.on{background:#7c6cf022}
+#emotes button small{position:absolute;right:3px;bottom:1px;font-size:9.5px;font-weight:800;color:var(--muted)}
+.touch #emotes button small{display:none}
+#help{position:absolute;left:50%;bottom:calc(20px + env(safe-area-inset-bottom));transform:translateX(-50%);padding:9px 14px;font-size:12.5px;color:var(--muted);text-align:center;max-width:calc(100vw - 32px);transition:opacity .6s;white-space:nowrap}
+#help b{color:var(--ink)}
+#hint{position:absolute;left:50%;top:max(12px,env(safe-area-inset-top));transform:translateX(-50%);padding:8px 14px;font-size:14px;display:none;text-align:center;max-width:calc(100vw - 600px);min-width:240px}
+#hint b{font-family:var(--ko);font-size:17px}
+#touch{display:none}
+.touch #touch{display:block}
+.touch #help .pc{display:none}
+#help .mob{display:none}
+.touch #help .mob{display:inline}
+.touch #help{bottom:calc(176px + env(safe-area-inset-bottom));white-space:normal}
+#joy{position:absolute;left:calc(22px + env(safe-area-inset-left));bottom:calc(22px + env(safe-area-inset-bottom));width:130px;height:130px;border-radius:50%;background:#1b1f2a40;border:2px solid #ffffffb0;backdrop-filter:blur(4px)}
+#knob{position:absolute;left:50%;top:50%;width:56px;height:56px;margin:-28px 0 0 -28px;border-radius:50%;background:#fffffff0;box-shadow:0 4px 14px #0004}
+.tbtn{position:absolute;width:68px;height:68px;border-radius:50%;background:#ffffffd9;box-shadow:0 6px 18px #0003;font-size:26px;display:grid;place-items:center;font-weight:800;color:#1b1f2a}
+#bJump{right:calc(22px + env(safe-area-inset-right));bottom:calc(30px + env(safe-area-inset-bottom))}
+#bRun{right:calc(30px + env(safe-area-inset-right));bottom:calc(112px + env(safe-area-inset-bottom));width:54px;height:54px;font-size:13px}
+#bRun.on{background:var(--gold)}
+#quests{position:absolute;left:max(12px,env(safe-area-inset-left));top:calc(max(12px,env(safe-area-inset-top)) + 92px);width:min(300px,calc(100vw - 24px));padding:10px 12px}
+#quests h4{margin:0 0 6px;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);display:flex;justify-content:space-between;align-items:center;gap:8px}
+#quests h4 b{color:#1c8a4f;font-size:14px;letter-spacing:0}
+#quests h4 button{font-size:16px;line-height:1;padding:0 4px}
+.q{display:flex;gap:8px;align-items:flex-start;padding:6px;border-radius:10px;font-size:13px;line-height:1.3;width:100%;text-align:left}
+.q.on{background:#7c6cf01f;outline:1.5px solid var(--accent)}
+.q .ic{flex:none;width:22px;text-align:center}.q.done{color:var(--muted)}.q.done .t{text-decoration:line-through}.q .stars{color:var(--gold);font-size:11px}
+#quests.min .q:not(.on){display:none}
+#prompt{position:absolute;left:50%;bottom:calc(64px + env(safe-area-inset-bottom));transform:translateX(-50%);padding:10px 16px;font-weight:700;font-size:14px;display:none;align-items:center;gap:10px;white-space:nowrap}
+#prompt kbd{background:var(--ink);color:#fff;border-radius:6px;padding:2px 8px;font-family:var(--ui)}
+#snd{position:absolute;right:max(12px,env(safe-area-inset-right));top:calc(max(12px,env(safe-area-inset-top)) + 70px);width:46px;height:46px;border-radius:14px;font-size:20px}
+#dlg{position:absolute;left:50%;bottom:calc(16px + env(safe-area-inset-bottom));transform:translateX(-50%);width:min(640px,calc(100vw - 24px));padding:16px;display:none;flex-direction:column;gap:10px;max-height:calc(100vh - 40px);overflow:auto;z-index:3}
+#dlg .who{display:flex;align-items:center;gap:8px;flex-wrap:wrap}#dlg .badge{background:#e2574c;color:#fff;font-weight:800;border-radius:10px;padding:4px 10px;font-size:13px;font-family:var(--ko)}
+#dlg .sp{margin-left:auto;display:flex;gap:6px;flex-wrap:wrap}.chip{border:1px solid var(--line);border-radius:999px;padding:5px 11px;font-size:12.5px;font-weight:700;background:var(--paper)}
+#dMic.on{background:#e2574c;color:#fff;border-color:#e2574c;animation:pulse 1s infinite}@keyframes pulse{50%{box-shadow:0 0 0 6px #e2574c33}}
+#dlg .line{font-family:var(--ko);font-size:24px;font-weight:900;line-height:1.35}#dlg .rom{font-size:13px;color:var(--muted);font-style:italic;margin-top:-6px}
+#dlg .mn{font-size:14px;color:#2f6bff;font-weight:700;display:none}#dlg.hint .mn,#dlg.hint .ch .cm{display:block}
+#dlg .chs{display:grid;gap:8px}.ch{text-align:left;background:var(--paper);border:1.5px solid var(--line);border-radius:12px;padding:10px 12px}.ch:hover{border-color:#2f6bff}
+.ch .ck{font-family:var(--ko);font-size:18px;font-weight:800}.ch .cr{font-size:12px;color:var(--muted);font-style:italic}.ch .cm{font-size:12.5px;color:#2f6bff;font-weight:700;display:none}
+.ch.bad{border-color:#e5484d;background:#e5484d14;animation:shake .3s}.ch.good{border-color:#22a861;background:#22a86118}@keyframes shake{25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+#dlg .fb{font-size:13.5px;font-weight:700;border-radius:10px;padding:8px 10px;display:none}#dlg .fb.bad{display:block;background:#e5484d18;color:#e5484d}#dlg .fb.good{display:block;background:#22a86118;color:#1c8a4f}
+#passed{position:fixed;left:0;right:0;top:30%;text-align:center;z-index:8;pointer-events:none;opacity:0;transform:scale(1.1);transition:opacity .35s,transform .35s}#passed.on{opacity:1;transform:none}
+#passed .t1{font-weight:800;font-size:clamp(28px,6vw,52px);color:#fff;text-shadow:0 4px 24px #0009}#passed .t2{font-weight:700;font-size:clamp(16px,3vw,22px);color:#ffe7a8;text-shadow:0 2px 12px #000a;margin-top:6px}
+#bTalk{right:calc(104px + env(safe-area-inset-right));bottom:calc(30px + env(safe-area-inset-bottom));background:#e2574c;color:#fff;display:none}
+.touch #prompt{bottom:calc(178px + env(safe-area-inset-bottom))}
+#loading{position:fixed;inset:0;z-index:9;display:grid;place-items:center;background:linear-gradient(#5b86c0,#c9d4dc);font-weight:800;font-size:18px;color:#fff;text-align:center}
+#loading .k{font-family:var(--ko);font-size:44px;display:block;text-shadow:0 4px 18px #0005}
+@media (max-width:760px){#hint{max-width:calc(100vw - 24px);top:auto;bottom:calc(190px + env(safe-area-inset-bottom))}#emotes{top:auto;bottom:calc(200px + env(safe-area-inset-bottom));flex-direction:column}#card{max-width:calc(100vw - 24px)}}
+</style>
+</head>
+<body>
+<canvas id="c" tabindex="0"></canvas>
+<div id="loading"><div><span class="k">남산서울타워</span>Намсан цамхаг ачаалж байна…</div></div>
+<div id="hud" hidden>
+  <div id="card" class="panel"><div class="t">Намсан цамхаг<span>남산서울타워</span></div><div class="s"><span id="src" class="src"></span><button id="rnd" hidden>🎲 Өөр дүр</button></div><div class="note" id="note" hidden>TriBee профайл дээрээ бүтээсэн дүрээрээ орж ирвэл энд таны дүр гарна.</div></div>
+  <div id="emotes" class="panel">
+    <button data-m="calm" title="Тайван (1)">🙂<small>1</small></button>
+    <button data-m="wave" title="Даллах (2)">👋<small>2</small></button>
+    <button data-m="dance" title="Бүжиглэх (3)">💃<small>3</small></button>
+    <button data-m="jump" title="Үсрэх (4)">🦘<small>4</small></button>
+  </div>
+  <div id="hint" class="panel"></div>
+  <div id="quests" class="panel"><h4>Даалгавар <span id="qcount"></span><b id="money"></b><button id="qmin">–</button></h4><div id="qlist"></div></div>
+  <button id="snd" class="panel" title="Дуу">🔊</button>
+  <div id="prompt" class="panel"><kbd>E</kbd><span id="promptT"></span></div>
+  <div id="dlg" class="panel">
+    <div class="who"><span class="badge" id="dWho"></span><span id="dStep" style="font-size:12px;color:var(--muted)"></span><span class="sp"><button class="chip" id="dSay">🔊 Дахин сонсох</button><button class="chip" id="dMic">🎤 Хэлж хариулах</button><button class="chip" id="dHint">💡 Орчуулга</button><button class="chip" id="dX">✕</button></span></div>
+    <div class="line" id="dLine"></div><div class="rom" id="dRom"></div><div class="mn" id="dMn"></div><div class="chs" id="dChs"></div><div class="fb" id="dFb"></div>
+  </div>
+  <div id="help" class="panel"><span class="pc"><b>WASD</b> алхах · <b>Хулгана/тачпад чирэх</b> эргэж харах · <b>Дугуй</b> ойртох · <b>Space</b> үсрэх · <b>Shift</b> гүйх · <b>1–4</b> хөдөлгөөн</span><span class="mob"><b>Джойстик</b> алхах · <b>Дэлгэц чирэх</b> харах · <b>Хоёр хуруу</b> ойртох</span></div>
+  <div id="touch"><div id="joy"><div id="knob"></div></div><button class="tbtn" id="bJump" aria-label="Үсрэх">⤒</button><button class="tbtn" id="bRun" aria-label="Гүйх">ГҮЙХ</button><button class="tbtn" id="bTalk" aria-label="Ярих">💬</button></div>
+</div>
+<div id="passed"><div class="t1" id="pT1"></div><div class="t2" id="pT2"></div>
+</div>
+<script src="/vendor/three.min.js"></script>
+<script src="/tribee-avatar3d.js"></script>
+<script>
+"use strict";
+const $ = id => document.getElementById(id);
+const store = { get(k, d) { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch { return d; } }, set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} } };
+const isTouch = matchMedia("(pointer:coarse)").matches || "ontouchstart" in window;
+if (isTouch) document.documentElement.classList.add("touch");
+const LOW = isTouch || /[?&]low\b/.test(location.search);
+THREE.ColorManagement.legacyMode = false;
+const AV = window.TribeeAvatar3D;
+const R = (a, b) => a + Math.random() * (b - a);
+let seed = 7; const rnd = () => ((seed = (seed * 16807) % 2147483647) - 1) / 2147483646, RR = (a, b) => a + rnd() * (b - a);
+
+/* ================= THE MEMBER'S TRIBEE AVATAR =================
+   TriBee hands the avatar over in one of two ways:
+   1) link:   /namsan#tribee=<base64url of {"look":{...},"name":"...","energy":80}>
+   2) iframe: parent.postMessage({type:"tribee-buddy", look, name, energy}, gameOrigin)
+   The last one received is remembered in this browser. */
+const TRIBEE_ORIGINS = /^https:\/\/(tribee\.pages\.dev|(www\.)?tribee\.ub\.mn|tribee\.zzosho831\.chatgpt\.site)$/;
+function fromHash() {
+  const m = location.hash.match(/tribee=([A-Za-z0-9_\-+/=%]+)/); if (!m) return null;
+  try {
+    const b = decodeURIComponent(m[1]).replace(/-/g, "+").replace(/_/g, "/"), bin = atob(b + "===".slice((b.length + 3) % 4));
+    const d = JSON.parse(new TextDecoder().decode(Uint8Array.from(bin, c => c.charCodeAt(0))));
+    history.replaceState(null, "", location.pathname + location.search); return d;
+  } catch { return null; }
+}
+function cleanBuddy(d) { if (!d || typeof d !== "object" || !d.look || typeof d.look !== "object") return null; return { look: AV.tidy(d.look), name: String(d.name || "").slice(0, 20), energy: Number.isFinite(+d.energy) ? Math.max(0, Math.min(100, +d.energy)) : 80 }; }
+let buddy = cleanBuddy(fromHash()) || cleanBuddy(store.get("tribee-buddy-3d", null)), demo = !buddy;
+if (buddy) store.set("tribee-buddy-3d", buddy); else buddy = { look: AV.tidy({ ...AV.DEFAULT, top: 0, topColor: 3 }), name: "", energy: 85 };
+addEventListener("message", e => { if (!TRIBEE_ORIGINS.test(e.origin) || !e.data || e.data.type !== "tribee-buddy") return; const b = cleanBuddy(e.data); if (!b) return; buddy = b; demo = false; store.set("tribee-buddy-3d", b); if (P.ch) setPlayer(); });
+if (parent !== window) try { parent.postMessage({ type: "seoul3d-ready" }, "*"); } catch {}
+
+/* ================= RENDERER ================= */
+const canvas = $("c");
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: false, powerPreference: "high-performance" });
+renderer.setPixelRatio(1);
+renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+const PR = Math.min(devicePixelRatio, LOW ? 1.5 : 2);
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(55, 1, .1, 9000);
+// late-afternoon sun from the south-west; the haze colour matches the sky's horizon so distance fades naturally
+const SUN_DIR = new THREE.Vector3(-.55, .38, .74).normalize();
+const HORIZON = new THREE.Color("#c4cfd8"), ZENITH = new THREE.Color("#2f63b0");
+scene.fog = new THREE.FogExp2(HORIZON, LOW ? .00052 : .00042);
+const sun = new THREE.DirectionalLight("#ffe2bf", 3.1);
+sun.castShadow = true; sun.shadow.mapSize.set(LOW ? 2048 : 4096, LOW ? 2048 : 4096);
+Object.assign(sun.shadow.camera, { left: -40, right: 40, top: 40, bottom: -40, near: 1, far: 500 }); sun.shadow.bias = -.0003; sun.shadow.normalBias = .035; sun.shadow.radius = 3;
+scene.add(sun, sun.target);
+const hemi = new THREE.HemisphereLight("#bcd3f0", "#5d5040", .35); scene.add(hemi);
+
+// Sky: Rayleigh-style gradient, horizon haze and a Mie sun halo (linear output; the final pass tone-maps)
+const skyMat = new THREE.ShaderMaterial({
+  side: THREE.BackSide, depthWrite: false, fog: false,
+  uniforms: { zen: { value: ZENITH }, hor: { value: HORIZON }, sd: { value: SUN_DIR } },
+  vertexShader: "varying vec3 vP;void main(){vP=normalize(position);gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);gl_Position.z=gl_Position.w;}",
+  fragmentShader: `uniform vec3 zen;uniform vec3 hor;uniform vec3 sd;varying vec3 vP;
+  void main(){float h=clamp(vP.y,-.2,1.);float t=pow(max(h,0.),.42);vec3 c=mix(hor*1.08,zen,t);
+    c=mix(c,hor*.82,smoothstep(0.,-.2,h));                                   // below horizon: haze
+    float s=max(dot(vP,sd),0.);
+    c+=vec3(1.,.78,.52)*(pow(s,8.)*.35+pow(s,64.)*.6)*(1.-t*.5);            // glow around the sun
+    c+=vec3(1.,.92,.8)*smoothstep(.9994,.9998,s)*40.;                          // the sun disc
+    gl_FragColor=vec4(c,1.);}`
+});
+const sky = new THREE.Mesh(new THREE.SphereGeometry(1, 48, 24), skyMat); sky.scale.setScalar(8000); sky.frustumCulled = false; sky.renderOrder = -1; scene.add(sky);
+// image-based lighting from that same sky, so metal and glass reflect it and shadows get sky-blue fill
+function bakeEnvironment() {
+  const s = new THREE.Scene(), m = new THREE.Mesh(new THREE.SphereGeometry(50, 48, 24), skyMat.clone()); s.add(m);
+  const ground = new THREE.Mesh(new THREE.CircleGeometry(49, 32).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ color: "#6d6a5e" })); ground.position.y = -3; s.add(ground);
+  const pm = new THREE.PMREMGenerator(renderer); scene.environment = pm.fromScene(s, .02).texture; pm.dispose();
+}
+
+/* ---------- post: bloom + filmic tone map ---------- */
+const RT = new THREE.WebGLRenderTarget(4, 4, { type: THREE.HalfFloatType, samples: LOW ? 2 : 4 });
+const bloomA = new THREE.WebGLRenderTarget(4, 4, { type: THREE.HalfFloatType }), bloomB = bloomA.clone();
+const fsCam = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1), fsScene = new THREE.Scene(), fsQuad = new THREE.Mesh(new THREE.PlaneGeometry(2, 2)); fsQuad.frustumCulled = false; fsScene.add(fsQuad);
+const VS = "varying vec2 vUv;void main(){vUv=uv;gl_Position=vec4(position.xy,0.,1.);}";
+const brightMat = new THREE.ShaderMaterial({ uniforms: { t: { value: null } }, vertexShader: VS, fragmentShader: "uniform sampler2D t;varying vec2 vUv;void main(){vec3 c=texture2D(t,vUv).rgb;float l=max(max(c.r,c.g),c.b);gl_FragColor=vec4(c*smoothstep(1.4,3.,l),1.);}" });
+const blurMat = new THREE.ShaderMaterial({ uniforms: { t: { value: null }, dir: { value: new THREE.Vector2() } }, vertexShader: VS,
+  fragmentShader: "uniform sampler2D t;uniform vec2 dir;varying vec2 vUv;void main(){vec3 c=texture2D(t,vUv).rgb*.227;c+=(texture2D(t,vUv+dir*1.384).rgb+texture2D(t,vUv-dir*1.384).rgb)*.316;c+=(texture2D(t,vUv+dir*3.23).rgb+texture2D(t,vUv-dir*3.23).rgb)*.07;gl_FragColor=vec4(c,1.);}" });
+const finalMat = new THREE.ShaderMaterial({ uniforms: { t: { value: RT.texture }, b: { value: bloomA.texture }, exposure: { value: 1 } }, vertexShader: VS,
+  fragmentShader: `uniform sampler2D t;uniform sampler2D b;uniform float exposure;varying vec2 vUv;
+  vec3 aces(vec3 x){const mat3 i=mat3(.59719,.07600,.02840,.35458,.90834,.13383,.04823,.01566,.83777);const mat3 o=mat3(1.60475,-.10208,-.00327,-.53108,1.10813,-.07276,-.07367,-.00605,1.07602);
+    x=i*x;vec3 a=x*(x+.0245786)-.000090537;vec3 d=x*(.983729*x+.4329510)+.238081;return clamp(o*(a/d),0.,1.);}
+  void main(){vec3 c=texture2D(t,vUv).rgb+texture2D(b,vUv).rgb*.6;c=aces(c*exposure);c=pow(c,vec3(1./2.2));
+    vec2 d=vUv-.5;c*=1.-dot(d,d)*.28;gl_FragColor=vec4(c,1.);}` });
+function pass(mat, target) { fsQuad.material = mat; renderer.setRenderTarget(target); renderer.render(fsScene, fsCam); }
+
+/* ================= PROCEDURAL PBR TEXTURES ================= */
+function canvasOf(w, h, draw) { const c = document.createElement("canvas"); c.width = w; c.height = h; draw(c.getContext("2d"), w, h); return c; }
+function texOf(c, srgb = true, rep = true) { const t = new THREE.CanvasTexture(c); if (srgb) t.encoding = THREE.sRGBEncoding; t.anisotropy = LOW ? 4 : 12; if (rep) t.wrapS = t.wrapT = THREE.RepeatWrapping; return t; }
+// normal map from a height canvas (bright = high)
+function normalOf(hc, strength = 2) {
+  const w = hc.width, h = hc.height, src = hc.getContext("2d").getImageData(0, 0, w, h).data, out = document.createElement("canvas"); out.width = w; out.height = h;
+  const ctx = out.getContext("2d"), img = ctx.createImageData(w, h), H = (x, y) => src[(((y + h) % h) * w + ((x + w) % w)) * 4] / 255;
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) { const dx = (H(x + 1, y) - H(x - 1, y)) * strength, dy = (H(x, y + 1) - H(x, y - 1)) * strength, l = Math.hypot(dx, dy, 1), i = (y * w + x) * 4; img.data[i] = (-dx / l * .5 + .5) * 255; img.data[i + 1] = (dy / l * .5 + .5) * 255; img.data[i + 2] = (1 / l * .5 + .5) * 255; img.data[i + 3] = 255; }
+  ctx.putImageData(img, 0, 0); return texOf(out, false);
+}
+const noiseDots = (c, w, h, n, col, a, s = 2) => { for (let i = 0; i < n; i++) { c.fillStyle = col(); c.globalAlpha = Math.random() * a; c.fillRect(Math.random() * w, Math.random() * h, s, s); } c.globalAlpha = 1; };
+function material(kind) {
+  const W = LOW ? 256 : 512;
+  if (kind === "granite") {   // 50cm granite pavers with dark grout
+    const col = canvasOf(W, W, (c, w, h) => { c.fillStyle = "#6c6760"; c.fillRect(0, 0, w, h); const n = 4, s = w / n; for (let y = 0; y < n; y++) for (let x = 0; x < n; x++) { const off = y % 2 ? s / 2 : 0; for (const ox of [0, -w]) { c.fillStyle = `hsl(${R(28, 40)},${R(5, 10)}%,${R(66, 76)}%)`; c.fillRect(x * s + off + ox + 2, y * s + 2, s - 4, s - 4); } } noiseDots(c, w, h, w * 30, () => Math.random() < .5 ? "#2b2a28" : "#ffffff", .25, 1.5); });
+    const hgt = canvasOf(W, W, (c, w, h) => { c.fillStyle = "#000"; c.fillRect(0, 0, w, h); const n = 4, s = w / n; c.fillStyle = "#fff"; for (let y = 0; y < n; y++) for (let x = 0; x < n; x++) { const off = y % 2 ? s / 2 : 0; for (const ox of [0, -w]) c.fillRect(x * s + off + ox + 3, y * s + 3, s - 6, s - 6); } noiseDots(c, w, h, w * 20, () => "#888", .4, 1); });
+    return { map: texOf(col), normalMap: normalOf(hgt, 3), roughness: .82 };
+  }
+  if (kind === "wood") {      // weathered deck planks
+    const col = canvasOf(W, W, (c, w, h) => { const n = 8, s = h / n; for (let y = 0; y < n; y++) { c.fillStyle = `hsl(${R(20, 30)},${R(30, 42)}%,${R(28, 38)}%)`; c.fillRect(0, y * s, w, s); for (let k = 0; k < 18; k++) { c.strokeStyle = `rgba(30,15,5,${R(.08, .25)})`; c.lineWidth = R(.5, 1.6); c.beginPath(); const yy = y * s + R(2, s - 2); c.moveTo(0, yy); c.bezierCurveTo(w * .3, yy + R(-2, 2), w * .7, yy + R(-2, 2), w, yy); c.stroke(); } c.fillStyle = "rgba(0,0,0,.6)"; c.fillRect(0, y * s + s - 2, w, 2); c.fillRect((y * 137) % w, y * s, 2, s); } });
+    const hgt = canvasOf(W, W, (c, w, h) => { c.fillStyle = "#ccc"; c.fillRect(0, 0, w, h); const s = h / 8; c.fillStyle = "#000"; for (let y = 0; y < 8; y++) { c.fillRect(0, y * s + s - 3, w, 3); c.fillRect((y * 137) % w, y * s, 2, s); } });
+    return { map: texOf(col), normalMap: normalOf(hgt, 4), roughness: .75 };
+  }
+  if (kind === "concrete") {
+    const col = canvasOf(W / 2, W, (c, w, h) => { c.fillStyle = "#e7e3da"; c.fillRect(0, 0, w, h); noiseDots(c, w, h, w * 40, () => Math.random() < .6 ? "#b9b2a4" : "#ffffff", .2, 2); for (let i = 0; i < 6; i++) { const g = c.createLinearGradient(0, 0, 0, h); g.addColorStop(0, "rgba(120,110,95,0)"); g.addColorStop(1, "rgba(120,110,95,.12)"); c.fillStyle = g; c.fillRect(R(0, w), 0, R(4, 14), h); } });
+    const hgt = canvasOf(W / 2, W, (c, w, h) => { c.fillStyle = "#999"; c.fillRect(0, 0, w, h); c.fillStyle = "#555"; for (let y = 0; y < h; y += h / 4) c.fillRect(0, y, w, 2); noiseDots(c, w, h, w * 30, () => "#fff", .3, 1); });
+    return { map: texOf(col), normalMap: normalOf(hgt, 1.5), roughness: .9 };
+  }
+  if (kind === "forest") {    // leaf litter and soil
+    const col = canvasOf(W, W, (c, w, h) => { c.fillStyle = "#4e4330"; c.fillRect(0, 0, w, h); const pal = ["#9a4a28", "#b8662c", "#c9963a", "#6a5a2e", "#7a3a22", "#5d6a30", "#a87a3a"]; for (let i = 0; i < w * 14; i++) { c.save(); c.translate(Math.random() * w, Math.random() * h); c.rotate(Math.random() * 6.28); c.fillStyle = pal[(Math.random() * pal.length) | 0]; c.globalAlpha = R(.4, .9); c.beginPath(); c.ellipse(0, 0, R(1.5, 4), R(1, 2.2), 0, 0, 7); c.fill(); c.restore(); } });
+    const hgt = canvasOf(W, W, (c, w, h) => { c.fillStyle = "#777"; c.fillRect(0, 0, w, h); noiseDots(c, w, h, w * 30, () => Math.random() < .5 ? "#fff" : "#000", .35, 3); });
+    return { map: texOf(col), normalMap: normalOf(hgt, 2.5), roughness: .95 };
+  }
+  if (kind === "glass") {
+    const col = canvasOf(256, 64, (c, w, h) => { c.fillStyle = "#1e2a35"; c.fillRect(0, 0, w, h); c.fillStyle = "#c9cfd4"; for (let x = 0; x < w; x += 16) c.fillRect(x, 0, 2, h); c.fillRect(0, 0, w, 3); c.fillRect(0, h - 3, w, 3); c.fillStyle = "rgba(255,220,170,.18)"; for (let x = 4; x < w; x += 16) if (Math.random() < .3) c.fillRect(x, 6, 10, h - 12); });
+    return { map: texOf(col), roughness: .08, metalness: .85, envMapIntensity: 1.6 };
+  }
+  if (kind === "bark") {
+    const col = canvasOf(64, 128, (c, w, h) => { c.fillStyle = "#4a3828"; c.fillRect(0, 0, w, h); for (let i = 0; i < 60; i++) { c.fillStyle = Math.random() < .5 ? "#2e2318" : "#6b5440"; c.fillRect(R(0, w), R(0, h), R(1, 3), R(8, 30)); } });
+    return { map: texOf(col), roughness: 1 };
+  }
+}
+const MATS = {};
+function std(key, o = {}) { return MATS[key] ||= new THREE.MeshStandardMaterial({ vertexColors: true, roughness: .8, metalness: 0, ...o }); }
+
+/* ================= STATIC BATCHING (one draw call per material) ================= */
+const _m = new THREE.Matrix4(), _q = new THREE.Quaternion(), _e = new THREE.Euler(), _p = new THREE.Vector3(), _s = new THREE.Vector3(), _c = new THREE.Color();
+const BK = {};
+const bucket = (k, mat, cast = true, recv = true) => BK[k] = { mat, geos: [], cast, recv };
+function put(k, g, color, x = 0, y = 0, z = 0, ry = 0, sx = 1, sy = 1, sz = 1, rx = 0) {
+  _e.set(rx, ry, 0); _m.compose(_p.set(x, y, z), _q.setFromEuler(_e), _s.set(sx, sy, sz)); g.applyMatrix4(_m);
+  if (!g.attributes.color) { _c.set(color); const n = g.attributes.position.count, a = new Float32Array(n * 3); for (let i = 0; i < n; i++) a.set([_c.r, _c.g, _c.b], i * 3); g.setAttribute("color", new THREE.BufferAttribute(a, 3)); }
+  if (!g.index) g.setIndex([...Array(g.attributes.position.count).keys()]);
+  BK[k].geos.push(g);
+}
+function merge(geos) {
+  let nv = 0, ni = 0; for (const g of geos) { nv += g.attributes.position.count; ni += g.index.count; }
+  const P = new Float32Array(nv * 3), N = new Float32Array(nv * 3), U = new Float32Array(nv * 2), C = new Float32Array(nv * 3), I = new Uint32Array(ni); let vo = 0, io = 0;
+  for (const g of geos) { const a = g.attributes; P.set(a.position.array, vo * 3); N.set(a.normal.array, vo * 3); if (a.uv) U.set(a.uv.array, vo * 2); if (a.color) C.set(a.color.array, vo * 3); else C.fill(1, vo * 3, (vo + a.position.count) * 3); for (let k = 0; k < g.index.count; k++) I[io++] = g.index.array[k] + vo; vo += a.position.count; }
+  const m = new THREE.BufferGeometry(); m.setAttribute("position", new THREE.BufferAttribute(P, 3)); m.setAttribute("normal", new THREE.BufferAttribute(N, 3)); m.setAttribute("uv", new THREE.BufferAttribute(U, 2)); m.setAttribute("color", new THREE.BufferAttribute(C, 3)); m.setIndex(new THREE.BufferAttribute(I, 1)); m.computeBoundingSphere(); return m;
+}
+function flush() { for (const k in BK) { const b = BK[k]; if (!b.geos.length) continue; const m = new THREE.Mesh(merge(b.geos), b.mat); m.castShadow = b.cast; m.receiveShadow = b.recv; scene.add(m); b.geos = []; } }
+const uvScale = (g, sx, sy) => { const uv = g.attributes.uv; for (let i = 0; i < uv.count; i++) uv.setXY(i, uv.getX(i) * sx, uv.getY(i) * sy); return g; };
+const cyl = (k, rt, rb, h, x, y, z, col, seg = 32, ux = 1, uy = 1, open = false) => put(k, uvScale(new THREE.CylinderGeometry(rt, rb, h, seg, 1, open), ux, uy), col, x, y + h / 2, z);
+const box = (k, w, h, d, x, y, z, col, ry = 0) => put(k, new THREE.BoxGeometry(w, h, d), col, x, y + h / 2, z, ry);
+
+/* ================= WORLD ================= */
+const PLAZA_R = 50, CITY_Y = -150;
+const colliders = [];
+const ring = (r, x = 0, z = 0) => colliders.push({ x, z, r });
+function terrain(x, z) {
+  const r = Math.hypot(x, z); if (r < PLAZA_R + 2) return 0;
+  const t = r - PLAZA_R - 2, a = Math.atan2(z, x);
+  let h = -Math.min(1, t / 12) * 9 - Math.pow(t / 430, .82) * 142;
+  h += (Math.sin(a * 5 + 1.3) * 8 + Math.sin(a * 11 + .4) * 3.5 + Math.sin(x * .021 + z * .013) * 6 + Math.sin(x * .07 - z * .05) * 1.6) * Math.min(1, t / 50);
+  return Math.max(h, CITY_Y + .5);
+}
+function buildTerrain() {
+  const seg = LOW ? 180 : 280, g = new THREE.PlaneGeometry(1300, 1300, seg, seg); g.rotateX(-Math.PI / 2);
+  const pos = g.attributes.position, uv = g.attributes.uv, col = [], c = new THREE.Color(), base = new THREE.Color("#ffffff"), low = new THREE.Color("#b9ad94"), rock = new THREE.Color("#9a9184");
+  for (let i = 0; i < pos.count; i++) { const x = pos.getX(i), z = pos.getZ(i), h = terrain(x, z); pos.setY(i, h); uv.setXY(i, uv.getX(i) * 140, uv.getY(i) * 140); col.push(0, 0, 0); }
+  g.computeVertexNormals();
+  const nrm = g.attributes.normal;
+  for (let i = 0; i < pos.count; i++) { const h = pos.getY(i), steep = 1 - nrm.getY(i); c.copy(base).lerp(rock, Math.min(1, Math.max(0, (steep - .25) * 3))).lerp(low, Math.min(1, Math.max(0, (CITY_Y + 25 - h) / -25 + 1))); col[i * 3] = c.r; col[i * 3 + 1] = c.g; col[i * 3 + 2] = c.b; }
+  g.setAttribute("color", new THREE.Float32BufferAttribute(col, 3));
+  const m = new THREE.Mesh(g, new THREE.MeshStandardMaterial({ vertexColors: true, ...material("forest") })); m.receiveShadow = true; scene.add(m);
+}
+/* ---------- trees: leaf cards with outward normals so crowns shade like real foliage ---------- */
+function leafTexture(kind) {
+  return texOf(canvasOf(256, 256, (c, w, h) => {
+    c.clearRect(0, 0, w, h);
+    const n = kind === "pine" ? 260 : 150;
+    for (let i = 0; i < n; i++) {
+      const a = Math.random() * 6.283, r = Math.sqrt(Math.random()) * 112, x = 128 + Math.cos(a) * r, y = 128 + Math.sin(a) * r;
+      c.save(); c.translate(x, y); c.rotate(R(0, 6.28));
+      const l = R(78, 98); c.fillStyle = `hsl(40,${R(5, 25)}%,${l}%)`;
+      if (kind === "pine") { c.fillRect(-1, -14, 2.4, 28); c.rotate(.5); c.fillRect(-1, -12, 2.2, 24); }
+      else { c.beginPath(); c.ellipse(0, 0, R(7, 11), R(4, 6.5), 0, 0, 7); c.fill(); c.strokeStyle = `hsla(30,30%,${l - 25}%,.6)`; c.lineWidth = 1; c.beginPath(); c.moveTo(-9, 0); c.lineTo(9, 0); c.stroke(); }
+      c.restore();
+    }
+  }), true, false);
+}
+function treeGeometry(kind, cards) {
+  const trunk = [], leaves = [], pine = kind === "pine";
+  const T = new THREE.CylinderGeometry(pine ? .16 : .2, pine ? .3 : .34, pine ? 7 : 4.2, 7); T.translate(0, pine ? 3.5 : 2.1, 0); trunk.push(T);
+  const nb = pine ? 5 : 4;
+  for (let i = 0; i < nb; i++) { const b = new THREE.CylinderGeometry(.05, .1, pine ? 1.8 : 2.4, 5); b.translate(0, (pine ? 1.8 : 2.4) / 2, 0); b.rotateZ(R(.6, 1.1)); b.rotateY(i / nb * 6.28 + R(-.3, .3)); b.translate(0, pine ? 4 + i * .6 : 2.6 + i * .35, 0); trunk.push(b); }
+  const center = new THREE.Vector3(0, pine ? 6.2 : 4.6, 0), rad = pine ? new THREE.Vector3(2.4, 1.6, 2.4) : new THREE.Vector3(2.6, 2.1, 2.6);
+  for (let i = 0; i < cards; i++) {
+    const q = new THREE.PlaneGeometry(pine ? 2.8 : 2.4, pine ? 2.2 : 2.4);
+    const dir = new THREE.Vector3(R(-1, 1), R(pine ? -.3 : -.6, 1), R(-1, 1)).normalize(), p = dir.clone().multiply(rad).multiplyScalar(Math.cbrt(R(.25, 1))).add(center);
+    if (pine) { p.y = center.y + R(-2.6, 1.6); const k = 1 - (p.y - center.y + 2.6) / 5; p.x *= .5 + k * .7; p.z *= .5 + k * .7; }
+    q.rotateX(pine ? -Math.PI / 2 + R(-.9, .9) : R(0, 6.28)); q.rotateY(R(0, 6.28)); q.translate(p.x, p.y, p.z);
+    const nrm = q.attributes.normal, ps = q.attributes.position; for (let k = 0; k < ps.count; k++) { const v = new THREE.Vector3(ps.getX(k), ps.getY(k), ps.getZ(k)).sub(center).normalize(); nrm.setXYZ(k, v.x, v.y * .8 + .2, v.z); }
+    leaves.push(q);
+  }
+  const prep = gs => gs.map(g => { const n = g.attributes.position.count, a = new Float32Array(n * 3).fill(1); g.setAttribute("color", new THREE.BufferAttribute(a, 3)); if (!g.index) g.setIndex([...Array(n).keys()]); return g; });
+  return { trunk: merge(prep(trunk)), leaves: merge(prep(leaves)) };
+}
+const windUniform = { value: 0 };
+function leafMaterial(kind) {
+  const map = leafTexture(kind);
+  const m = new THREE.MeshStandardMaterial({ map, alphaTest: .45, side: THREE.DoubleSide, roughness: .85, metalness: 0 });
+  m.onBeforeCompile = sh => { sh.uniforms.wind = windUniform; sh.vertexShader = "uniform float wind;\n" + sh.vertexShader.replace("#include <begin_vertex>", "#include <begin_vertex>\n#ifdef USE_INSTANCING\nfloat ph=instanceMatrix[3].x*.21+instanceMatrix[3].z*.17;\n#else\nfloat ph=0.;\n#endif\ntransformed.x+=sin(wind*1.7+ph+position.y*.4)*.06*max(position.y-2.,0.);transformed.z+=cos(wind*1.3+ph)*.05*max(position.y-2.,0.);"); };
+  const depth = new THREE.MeshDepthMaterial({ depthPacking: THREE.RGBADepthPacking, map, alphaTest: .45 });
+  return { m, depth };
+}
+const BARK = new THREE.MeshStandardMaterial(material("bark"));
+function plantTrees(list, kind, cards) {
+  if (!list.length) return;
+  const g = treeGeometry(kind, cards), lm = leafMaterial(kind);
+  const tr = new THREE.InstancedMesh(g.trunk, BARK, list.length), lv = new THREE.InstancedMesh(g.leaves, lm.m, list.length);
+  lv.customDepthMaterial = lm.depth;
+  const o = new THREE.Object3D(), col = new THREE.Color();
+  list.forEach(([x, y, z, s, color], i) => { o.position.set(x, y - .2, z); o.rotation.set(0, R(0, 6.28), 0); o.scale.set(s * R(.85, 1.15), s * R(.9, 1.2), s * R(.85, 1.15)); o.updateMatrix(); tr.setMatrixAt(i, o.matrix); lv.setMatrixAt(i, o.matrix); lv.setColorAt(i, col.set(color)); });
+  lv.instanceColor.needsUpdate = true;
+  for (const m of [tr, lv]) { m.castShadow = true; m.receiveShadow = true; scene.add(m); }
+}
+const AUTUMN = ["#c2462a", "#d2652a", "#dc8c2c", "#d8ab3a", "#a8362a", "#c97a34", "#8f9a3e"], PINE = ["#3f5a2e", "#4a6634", "#36502a", "#55703a"];
+function buildForest() {
+  const near = [], nearPine = [], far = [], farPine = [];
+  const N = LOW ? 2600 : 5200;
+  for (let i = 0; i < N; i++) {
+    const a = rnd() * Math.PI * 2, r = PLAZA_R + 4 + Math.pow(rnd(), 1.35) * 560, x = Math.cos(a) * r, z = Math.sin(a) * r;
+    if (Math.abs(x) > 640 || Math.abs(z) > 640 || Math.hypot(x - CABLE.x1, z - CABLE.z1) < 16) continue;
+    const pine = rnd() < .4, y = terrain(x, z), s = RR(.9, 1.35) * (r > 200 ? 1.3 : 1);
+    const t = [x, y, z, s, pine ? PINE[(rnd() * PINE.length) | 0] : AUTUMN[(rnd() * AUTUMN.length) | 0]];
+    (r < 170 ? (pine ? nearPine : near) : (pine ? farPine : far)).push(t);
+  }
+  plantTrees(near, "leaf", LOW ? 26 : 40); plantTrees(nearPine, "pine", LOW ? 18 : 28);
+  plantTrees(far, "leaf", 14); plantTrees(farPine, "pine", 16);
+}
+/* ---------- the city below ---------- */
+function buildCity() {
+  const fac = canvasOf(128, 256, (c, w, h) => { c.fillStyle = "#ffffff"; c.fillRect(0, 0, w, h); for (let y = 6; y < h; y += 16) for (let x = 6; x < w; x += 16) { c.fillStyle = Math.random() < .1 ? "#efe3c4" : `hsl(205,${R(10, 20)}%,${R(22, 34)}%)`; c.fillRect(x, y, 10, 10); } });
+  const geo = new THREE.BoxGeometry(1, 1, 1).translate(0, .5, 0); uvScale(geo, 3, 6);
+  const n = LOW ? 4000 : 8000, mesh = new THREE.InstancedMesh(geo, new THREE.MeshStandardMaterial({ map: texOf(fac), roughness: .6, metalness: .1 }), n);
+  const pal = ["#ece7dc", "#dcd6ca", "#cdc6b8", "#e8dfce", "#bfbab0", "#f2eee6", "#d3c8b3", "#aeb6be", "#c9cfd6"], o = new THREE.Object3D(), col = new THREE.Color(); let i = 0;
+  while (i < n) {
+    const a = rnd() * Math.PI * 2, r = 560 + Math.pow(rnd(), 1.15) * 3200, x = Math.cos(a) * r, z = Math.sin(a) * r;
+    if (z > 1150 && z < 1420) continue; if (Math.abs(x) < 640 && Math.abs(z) < 640) continue;
+    const apt = rnd() < .32, tall = rnd() < .06, w = apt ? RR(11, 14) : RR(9, 24), d = apt ? RR(32, 48) : RR(9, 24), h = tall ? RR(90, 230) : apt ? RR(42, 78) : RR(8, 38);
+    o.position.set(x, CITY_Y, z); o.rotation.set(0, Math.round(a / (Math.PI / 2)) * Math.PI / 2 + (rnd() < .25 ? RR(-.4, .4) : 0), 0); o.scale.set(w, h, d); o.updateMatrix();
+    mesh.setMatrixAt(i, o.matrix); mesh.setColorAt(i, col.set(apt ? "#f3f0e8" : pal[(rnd() * pal.length) | 0])); i++;
+  }
+  mesh.instanceColor.needsUpdate = true; scene.add(mesh);
+  const cityGround = canvasOf(512, 512, (c, w, h) => { c.fillStyle = "#6f6a62"; c.fillRect(0, 0, w, h); for (let y = 0; y < 8; y++) for (let x = 0; x < 8; x++) { c.fillStyle = Math.random() < .12 ? `hsl(${R(80, 110)},${R(15, 25)}%,${R(30, 38)}%)` : `hsl(${R(25, 40)},${R(5, 12)}%,${R(44, 58)}%)`; c.fillRect(x * 64 + 6, y * 64 + 6, 52, 52); } c.fillStyle = "#3e3d3b"; for (let k = 0; k <= 8; k++) { c.fillRect(k * 64 - 3, 0, 6, h); c.fillRect(0, k * 64 - 3, w, 6); } });
+  const cg = uvScale(new THREE.PlaneGeometry(14000, 14000).rotateX(-Math.PI / 2), 110, 110), city = new THREE.Mesh(cg, new THREE.MeshStandardMaterial({ map: texOf(cityGround), roughness: .95 })); city.position.y = CITY_Y; scene.add(city);
+  const river = new THREE.Mesh(new THREE.PlaneGeometry(14000, 270).rotateX(-Math.PI / 2), new THREE.MeshStandardMaterial({ color: "#3e5c6e", roughness: .06, metalness: .7, envMapIntensity: 1.2 })); river.position.set(0, CITY_Y + .3, 1285); scene.add(river);
+  for (const x of [-2400, -1600, -900, -150, 700, 1500, 2300]) { const b = new THREE.Mesh(new THREE.BoxGeometry(28, 4, 300), new THREE.MeshStandardMaterial({ color: "#a39e94", roughness: .8 })); b.position.set(x, CITY_Y + 7, 1285); scene.add(b); }
+  // the mountains that ring Seoul
+  const mg = new THREE.IcosahedronGeometry(1, 4), mp = mg.attributes.position; for (let k = 0; k < mp.count; k++) { const v = new THREE.Vector3(mp.getX(k), mp.getY(k), mp.getZ(k)); const nn = 1 + Math.sin(v.x * 5.1) * .08 + Math.sin(v.z * 7.3 + v.y * 3) * .06; mp.setXYZ(k, v.x * nn, Math.max(v.y, -.2) * nn, v.z * nn); } mg.computeVertexNormals();
+  const mm = new THREE.MeshStandardMaterial({ color: "#4f5e4a", roughness: 1 });
+  for (let k = 0; k < 30; k++) { const a = k / 30 * Math.PI * 2 + RR(-.05, .05), r = 4200 + (k % 3) * 400; const m = new THREE.Mesh(mg, mm); m.scale.set(RR(700, 1100), RR(380, 720) * (Math.abs(Math.sin(a + 1.6)) > .8 ? 1.4 : 1), RR(700, 1100)); m.position.set(Math.cos(a) * r, CITY_Y, Math.sin(a) * r); m.rotation.y = k; scene.add(m); }
+}
+/* ---------- N Seoul Tower ---------- */
+function signTex(text, sub, bg = "#1f2b3a", fg = "#fff") { return texOf(canvasOf(512, 128, (c, w, h) => { c.fillStyle = bg; c.fillRect(0, 0, w, h); c.fillStyle = fg; c.textAlign = "center"; c.textBaseline = "middle"; c.font = `900 ${sub ? 54 : 66}px "Noto Sans KR", sans-serif`; c.fillText(text, w / 2, sub ? 50 : h / 2 + 3, w - 30); if (sub) { c.font = "700 24px Manrope, sans-serif"; c.globalAlpha = .85; c.fillText(sub, w / 2, 100); } }), true, false); }
+function buildTower() {
+  // Tower Plaza: a three-storey drum of glass and stone around the foot of the tower
+  cyl("glass", 13.2, 13.2, 7.4, 0, .4, 0, "#ffffff", 64, 12, 1); cyl("stone", 13.6, 13.6, .4, 0, 0, 0, "#cfc8bc", 64);
+  cyl("stone", 14, 14, .7, 0, 7.8, 0, "#ddd6ca", 64); cyl("stone", 12.6, 13.4, 1.4, 0, 8.5, 0, "#cbc3b4", 64);
+  for (let i = 0; i < 24; i++) { const a = i / 24 * Math.PI * 2; box("stone", .5, 7.4, .5, Math.cos(a) * 13.35, .4, Math.sin(a) * 13.35, "#e2dbcf", -a); }
+  ring(14.4);
+  // shaft: slightly tapered concrete with construction joints
+  cyl("concrete", 2.05, 2.75, 86, 0, 9.9, 0, "#ffffff", 32, 4, 14);
+  for (let y = 24; y < 94; y += 14) cyl("stone", 2.62 - (y - 24) * .0083, 2.62 - (y - 24) * .0083, .3, 0, y, 0, "#c9c2b5", 32);
+  // the observation section: skirt, alternating white bands and dark glass, roof
+  put("concrete", new THREE.CylinderGeometry(7.4, 2.4, 3.6, 48), "#ffffff", 0, 94.2, 0);
+  const deck = [[96, 1.1, 8.6, 7.6, "stone", "#efebe3"], [97.1, 3.3, 8.8, 8.7, "glass", "#ffffff"], [100.4, .9, 9.1, 9.1, "stone", "#f3efe8"], [101.3, 3.3, 8.8, 8.8, "glass", "#ffffff"], [104.6, .9, 9.1, 9.1, "stone", "#f3efe8"], [105.5, 2.8, 8.3, 8.6, "glass", "#ffffff"], [108.3, .8, 8.7, 8.7, "stone", "#f3efe8"]];
+  for (const [y, h, rt, rb, k, c] of deck) cyl(k, rt, rb, h, 0, y, 0, c, 64, 16, 1);
+  put("concrete", new THREE.CylinderGeometry(3.6, 8.7, 2.4, 64), "#ffffff", 0, 110.3, 0);
+  // the antenna mast
+  cyl("concrete", 1.7, 2.3, 6, 0, 111.5, 0, "#ffffff", 24);
+  for (let i = 0, y = 117.5; i < 10; i++) { const h = 5.2, r0 = 1.45 - i * .1, r1 = 1.45 - (i + 1) * .1; cyl("paint", Math.max(.25, r1), Math.max(.3, r0), h, 0, y, 0, i % 2 ? "#f4f1ea" : "#c8302a", 16); y += h; }
+  cyl("glow", .3, .3, .8, 0, 169.5, 0, "#ff4a3a", 8);
+  const s = new THREE.Mesh(new THREE.PlaneGeometry(7.6, 1.9), new THREE.MeshStandardMaterial({ map: signTex("남산서울타워", "N SEOUL TOWER"), roughness: .5, emissive: "#ffffff", emissiveIntensity: .06, emissiveMap: null }));
+  s.material.emissiveMap = s.material.map; s.position.set(0, 5.4, 13.62); scene.add(s);
+}
+/* ---------- plaza ---------- */
+const CABLE = { x0: 34, z0: -26, x1: 330, z1: -250 };
+const cabins = [];
+function cablePoint(f, off) { const x0 = CABLE.x0, z0 = CABLE.z0, x1 = CABLE.x1, z1 = CABLE.z1, dx = x1 - x0, dz = z1 - z0, L = Math.hypot(dx, dz), nx = -dz / L, nz = dx / L, y0 = 6.5, y1 = terrain(x1, z1) + 7.5; return new THREE.Vector3(x0 + dx * f + nx * off, y0 + (y1 - y0) * f - Math.sin(f * Math.PI) * 14, z0 + dz * f + nz * off); }
+function buildPlaza() {
+  put("granite", uvScale(new THREE.CircleGeometry(40, 96).rotateX(-Math.PI / 2), 40, 40), "#ffffff", 0, .02, 0);
+  put("wood", uvScale(new THREE.RingGeometry(40, PLAZA_R + 1.5, 128, 1).rotateX(-Math.PI / 2), 1, 1), "#ffffff", 0, .1, 0);
+  { const g = BK.wood.geos[BK.wood.geos.length - 1], ps = g.attributes.position, uv = g.attributes.uv; for (let i = 0; i < ps.count; i++) { const x = ps.getX(i), z = ps.getZ(i); uv.setXY(i, x / 4, z / 4); } }
+  put("stone", new THREE.CylinderGeometry(PLAZA_R + 1.5, PLAZA_R + 1.2, 3, 128, 1, true), "#8a8274", 0, -1.4, 0);
+  put("stone", uvScale(new THREE.TorusGeometry(40, .18, 6, 160).rotateX(Math.PI / 2), 1, 1), "#b9b1a3", 0, .1, 0);
+  // railing
+  const posts = Math.round(PLAZA_R * 2 * Math.PI / 2);
+  for (let i = 0; i < posts; i++) { const a = i / posts * Math.PI * 2; box("metal", .1, 1.2, .1, Math.cos(a) * PLAZA_R, 0, Math.sin(a) * PLAZA_R, "#4b5058", -a); }
+  for (const [y, r] of [[.55, .025], [1.15, .045]]) put("metal", new THREE.TorusGeometry(PLAZA_R, r, 8, 200).rotateX(Math.PI / 2), "#5a6068", 0, y, 0);
+  // love locks
+  const locks = LOW ? 2600 : 6000, lg = new THREE.BoxGeometry(.085, .11, .035), lockMesh = new THREE.InstancedMesh(lg, new THREE.MeshStandardMaterial({ roughness: .35, metalness: .55 }), locks);
+  const lc = ["#d8473c", "#e8a92e", "#2f6fd0", "#e05f9a", "#6f5fe0", "#2a8f82", "#f1eee6", "#f07a2a", "#f2cf3e", "#b9bec4"], o = new THREE.Object3D(), col = new THREE.Color();
+  for (let i = 0; i < locks; i++) { const a = Math.random() * Math.PI * 2, rr = PLAZA_R + R(-.05, .05), y = Math.random() < .55 ? R(.47, .6) : R(1.02, 1.12); o.position.set(Math.cos(a) * rr, y, Math.sin(a) * rr); o.rotation.set(R(-.3, .3), -a + Math.PI / 2 + R(-.5, .5), R(-.4, .4)); o.scale.setScalar(R(.85, 1.35)); o.updateMatrix(); lockMesh.setMatrixAt(i, o.matrix); lockMesh.setColorAt(i, col.set(lc[i % lc.length])); }
+  const treeLocks = LOW ? 900 : 2100, tl = new THREE.InstancedMesh(lg, lockMesh.material, treeLocks); let t = 0;
+  for (const [tx, tz] of [[-22, -34], [24, -33], [-36, -6]]) {
+    cyl("metal", .18, .26, 4.4, tx, 0, tz, "#4b5058", 10);
+    for (let k = 0; k < treeLocks / 3; k++, t++) { const h = R(.6, 4.2), rr = (4.6 - h) * .45 + .18, a = Math.random() * 6.283; o.position.set(tx + Math.cos(a) * rr, h, tz + Math.sin(a) * rr); o.rotation.set(R(-.4, .4), -a, R(-.4, .4)); o.scale.setScalar(R(1, 1.5)); o.updateMatrix(); tl.setMatrixAt(t, o.matrix); tl.setColorAt(t, col.set(lc[(Math.random() * lc.length) | 0])); }
+    ring(1.7, tx, tz);
+  }
+  for (const m of [lockMesh, tl]) { m.instanceColor.needsUpdate = true; m.castShadow = true; m.receiveShadow = true; scene.add(m); }
+  // Palgakjeong: octagonal pavilion
+  const PX = -30, PZ = 16;
+  put("stone", new THREE.CylinderGeometry(5.7, 6, .7, 8), "#bdb29e", PX, .35, PZ, Math.PI / 8);
+  for (let i = 0; i < 8; i++) { const a = i / 8 * Math.PI * 2 + Math.PI / 8; cyl("paint", .2, .22, 3.7, PX + Math.cos(a) * 4.8, .7, PZ + Math.sin(a) * 4.8, "#8f2a22", 12); }
+  put("paint", new THREE.CylinderGeometry(5.7, 5.7, .55, 8), "#2a7462", PX, 4.55, PZ, Math.PI / 8);
+  put("roof", new THREE.ConeGeometry(7.6, 3.4, 8, 3), "#3a3f45", PX, 6.5, PZ, Math.PI / 8);
+  put("roof", new THREE.CylinderGeometry(7.8, 7.4, .3, 8), "#2b2f34", PX, 4.95, PZ, Math.PI / 8);
+  put("metal", new THREE.SphereGeometry(.42, 16, 12), "#c9a24a", PX, 8.3, PZ);
+  ring(5.5, PX, PZ);
+  // Bongsudae beacon towers
+  for (let i = 0; i < 5; i++) { const a = -.15 + i * .13, bx = Math.cos(a) * 33, bz = Math.sin(a) * 33 + 6;
+    cyl("stone", 1.5, 1.8, 2.6, bx, 0, bz, "#a59c8d", 20, 3, 1); put("stone", new THREE.ConeGeometry(1.5, 1.6, 20), "#938a7c", bx, 3.4, bz); cyl("stone", .45, .5, 1.2, bx, 3.6, bz, "#6f685e", 12); ring(2, bx, bz); }
+  const bs = new THREE.Mesh(new THREE.PlaneGeometry(4, 1), new THREE.MeshStandardMaterial({ map: signTex("봉수대", "Бонсүдэ · дохионы цамхаг", "#5b3a26"), roughness: .6 })); bs.position.set(29, 1.25, 1); bs.rotation.y = -Math.PI / 2; scene.add(bs); box("metal", .12, 1.3, .12, 29.2, 0, 1, "#4a4f59");
+  // benches, lamps, coin telescopes
+  for (let i = 0; i < 10; i++) { const a = i / 10 * Math.PI * 2 + .3, r = 37, x = Math.cos(a) * r, z = Math.sin(a) * r; if (Math.hypot(x - PX, z - PZ) < 8) continue; box("wood", 2.6, .1, .8, x, .45, z, "#ffffff", -a + Math.PI / 2); box("metal", .12, .45, .7, x + Math.cos(a + Math.PI / 2) * 1.1, 0, z + Math.sin(a + Math.PI / 2) * 1.1, "#3a3f46", -a + Math.PI / 2); box("metal", .12, .45, .7, x - Math.cos(a + Math.PI / 2) * 1.1, 0, z - Math.sin(a + Math.PI / 2) * 1.1, "#3a3f46", -a + Math.PI / 2); ring(1.1, x, z); }
+  for (let i = 0; i < 14; i++) { const a = i / 14 * Math.PI * 2, x = Math.cos(a) * 41.5, z = Math.sin(a) * 41.5; cyl("metal", .06, .09, 4, x, 0, z, "#30353c", 8); put("glow", new THREE.SphereGeometry(.26, 12, 8), "#fff1c8", x, 4.15, z); ring(.3, x, z); }
+  for (let i = 0; i < 7; i++) { const a = i / 7 * Math.PI * 2 + .2, x = Math.cos(a) * 48.6, z = Math.sin(a) * 48.6; cyl("metal", .08, .14, 1.1, x, 0, z, "#3a3f46", 10); box("paint", .3, .3, .8, x, 1.1, z, "#2a5fc0", -a + Math.PI / 2); ring(.5, x, z); }
+  // planters with maples on the plaza
+  const maples = []; for (let i = 0; i < 9; i++) { const a = i / 9 * Math.PI * 2 + .2, x = Math.cos(a) * 25, z = Math.sin(a) * 25; if (Math.hypot(x - PX, z - PZ) < 9 || Math.hypot(x - 33, z - 6) < 7) continue; cyl("stone", 1.7, 1.7, .55, x, 0, z, "#9d968a", 24); maples.push([x, .55, z, 1.05, AUTUMN[i % 4]]); ring(1.9, x, z); }
+  plantTrees(maples, "leaf", 46);
+  // Namsan cable car: top station, cables and two cabins
+  const ca = Math.atan2(CABLE.x1 - CABLE.x0, CABLE.z1 - CABLE.z0);
+  box("stone", 10, 5, 7, CABLE.x0, 0, CABLE.z0, "#e6e0d4", ca); box("paint", 11, .5, 8, CABLE.x0, 5, CABLE.z0, "#b7322a", ca); ring(5.6, CABLE.x0, CABLE.z0);
+  const cs = new THREE.Mesh(new THREE.PlaneGeometry(6, 1.5), new THREE.MeshStandardMaterial({ map: signTex("남산 케이블카", "Намсан кабель тэрэг", "#b7322a"), roughness: .6 })); cs.position.set(CABLE.x0 - Math.sin(ca) * 3.55, 3.6, CABLE.z0 - Math.cos(ca) * 3.55); cs.rotation.y = ca + Math.PI; scene.add(cs);
+  box("stone", 12, 6, 8, CABLE.x1, terrain(CABLE.x1, CABLE.z1), CABLE.z1, "#e6e0d4", ca);
+  const pts = []; for (const off of [-1.2, 1.2]) for (let k = 0; k < 48; k++) { const P0 = cablePoint(k / 48, off), P1 = cablePoint((k + 1) / 48, off); pts.push(P0.x, P0.y, P0.z, P1.x, P1.y, P1.z); }
+  const lgeo = new THREE.BufferGeometry(); lgeo.setAttribute("position", new THREE.Float32BufferAttribute(pts, 3)); scene.add(new THREE.LineSegments(lgeo, new THREE.LineBasicMaterial({ color: "#222" })));
+  for (const [c, off] of [["#e2a92a", -1.2], ["#c8352d", 1.2]]) { const g = new THREE.Group(), bodyM = new THREE.Mesh(new THREE.BoxGeometry(3, 2.4, 2.2), new THREE.MeshStandardMaterial({ color: c, roughness: .4, metalness: .3 })), win = new THREE.Mesh(new THREE.BoxGeometry(3.05, .9, 2.25), new THREE.MeshStandardMaterial({ color: "#1e2a35", roughness: .05, metalness: .8 })), arm = new THREE.Mesh(new THREE.BoxGeometry(.15, 1.6, .15), new THREE.MeshStandardMaterial({ color: "#333", metalness: .8, roughness: .4 })); win.position.y = .35; arm.position.y = 2; g.add(bodyM, win, arm); bodyM.castShadow = true; scene.add(g); cabins.push({ g, off, f: off < 0 ? .25 : .75, dir: off < 0 ? 1 : -1 }); }
+}
+
+/* ================= PEOPLE ================= */
+function labelSprite(text, bg = "#7c6cf0dd", fg = "#fff") {
+  const t = texOf(canvasOf(512, 128, (c, w) => { c.font = `800 52px "Noto Sans KR", Manrope, sans-serif`; const tw = Math.min(w - 8, c.measureText(text).width + 48), x = (w - tw) / 2; c.fillStyle = bg; c.beginPath(); if (c.roundRect) c.roundRect(x, 18, tw, 92, 46); else c.rect(x, 18, tw, 92); c.fill(); c.fillStyle = fg; c.textAlign = "center"; c.textBaseline = "middle"; c.fillText(text, w / 2, 66, w - 40); }), true, false);
+  const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: t, depthWrite: false, transparent: true, fog: false })); s.scale.set(2.6, .65, 1); s.renderOrder = 5; return s;
+}
+function bubble(ch, text) { if (ch.userData.bub) { ch.remove(ch.userData.bub); ch.userData.bub.material.map.dispose(); } const b = labelSprite(text, "#ffffffee", "#1b1f2a"); b.position.y = ch.userData.height + .8; ch.add(b); ch.userData.bub = b; ch.userData.bubT = 4.5; }
+let hintT; function hint(html, ms) { const h = $("hint"); h.innerHTML = html; h.style.display = "block"; clearTimeout(hintT); hintT = setTimeout(() => h.style.display = "none", ms); }
+const tourists = [];
+const TALK = [["와, 멋있다!", "Хөөх, гоё юм!"], ["사진 찍어 주세요!", "Зураг авч өгөөч!"], ["서울이 다 보여요!", "Сөүл бүхэлдээ харагдаж байна!"], ["안녕하세요!", "Сайн байна уу!"], ["바람이 시원해요.", "Салхи сэрүүхэн байна."], ["자물쇠 걸자!", "Цоож зүүе!"], ["배고파요…", "Өлсөж байна…"], ["대박!", "Гайхалтай!"], ["단풍이 예뻐요.", "Намрын навч үзэсгэлэнтэй."]];
+const blockedAt = (x, z, rad) => Math.hypot(x, z) > PLAZA_R - .9 - rad + .45 || colliders.some(c => Math.hypot(x - c.x, z - c.z) < c.r + rad);
+function buildTourists() {
+  for (let i = 0; i < (LOW ? 10 : 18); i++) {
+    const ch = AV.build(AV.random()); let x, z; do { const a = Math.random() * 6.283, r = R(17, 45); x = Math.cos(a) * r; z = Math.sin(a) * r; } while (blockedAt(x, z, .6));
+    const p = { ch, x, z, tx: x, tz: z, wait: R(0, 4), v: R(1.1, 1.5), mode: i % 4 === 0 ? "look" : i % 5 === 1 ? "show" : "walk", cd: 0, ry: R(0, 6) };
+    if (p.mode === "look") { const b = Math.random() * 6.283; p.x = p.tx = Math.cos(b) * 48.2; p.z = p.tz = Math.sin(b) * 48.2; p.ry = Math.atan2(p.x, p.z); }
+    if (p.mode === "show") ch.userData.emote = ["dance", "wave", "jump"][i % 3];
+    ch.position.set(p.x, 0, p.z); ch.rotation.y = p.ry; scene.add(ch); tourists.push(p);
+  }
+}
+function updateTourists(dt, t) {
+  for (const p of tourists) {
+    let moving = false;
+    if (p.mode === "walk") {
+      const dx = p.tx - p.x, dz = p.tz - p.z, d = Math.hypot(dx, dz);
+      if (d < .4 || p.stuck > 1) { if ((p.wait -= dt) <= 0) { for (let k = 0; k < 8; k++) { const a = Math.random() * 6.283, r = R(16, 46), x = Math.cos(a) * r, z = Math.sin(a) * r; if (!blockedAt(x, z, .5)) { p.tx = x; p.tz = z; break; } } p.wait = R(1.5, 6); p.stuck = 0; } }
+      else { const nx = p.x + dx / d * p.v * dt, nz = p.z + dz / d * p.v * dt; if (!blockedAt(nx, nz, .45)) { p.x = nx; p.z = nz; p.ry = Math.atan2(dx, dz); moving = true; } else p.stuck = (p.stuck || 0) + dt; }
+    }
+    const pd = Math.hypot(P.x - p.x, P.z - p.z);
+    if (pd < 2.8) { p.ry = Math.atan2(P.x - p.x, P.z - p.z); moving = false; p.ch.userData.greet = true; } else p.ch.userData.greet = false;
+    p.ch.position.set(p.x, 0, p.z); let dr = p.ry - p.ch.rotation.y; dr = Math.atan2(Math.sin(dr), Math.cos(dr)); p.ch.rotation.y += dr * Math.min(1, dt * 6);
+    AV.animate(p.ch, moving ? p.v : 0, false, dt, t);
+    p.cd -= dt; if (pd < 3 && p.cd <= 0) { const l = TALK[(Math.random() * TALK.length) | 0]; bubble(p.ch, l[0]); hint(`💬 <b>${l[0]}</b> = ${l[1]}`, 3200); p.cd = 20; }
+  }
+}
+
+/* ================= TASKS: talk to Koreans, out loud ================= */
+// Each step: [npc line, romanization, Mongolian, [[reply, romanization, Mongolian, correct?, why-wrong]...]]
+const QUESTS = [
+  { id: "ticket", ic: "🎫", who: "매표원", whoMn: "кассчин", task: "Цамхгийн тасалбарыг сурагчийн хөнгөлөлттэй ав", cost: 8000, item: "🎫 전망대 표", voice: { pitch: 1.15, rate: .92 }, at: [0, 15.8, 0],
+    look: { skin: 1, eyes: 6, brows: 1, nose: 1, mouth: 0, cheeks: 1, hair: 4, hairColor: 0, top: 6, topColor: 10, bottom: 2, bottomColor: 1, shoes: 1, shoeColor: 1, hat: 0, glasses: 0, back: 0, hand: 0, move: 1, build: 25, height: 45 },
+    steps: [
+      ["안녕하세요! 전망대 표 사시겠어요?", "annyeonghaseyo! jeonmangdae pyo sasigesseoyo?", "Сайн байна уу! Ажиглах тавцангийн тасалбар авах уу?", [["네, 얼마예요?", "ne, eolmayeyo?", "Тийм, хэд вэ?", 1], ["어디예요?", "eodiyeyo?", "Хаана вэ?", 0, "Та цамхгийн яг доор байна 😄 Үнийг нь асуугаарай: «얼마예요?»"], ["안녕히 가세요.", "annyeonghi gaseyo.", "Баяртай.", 0, "Одоо л ярьж эхэлж байна шүү дээ."]]],
+      ["만 원이에요.", "man wonieyo.", "10,000 вон.", [["좀 비싸요. 학생 할인 돼요?", "jom bissayo. haksaeng harin dwaeyo?", "Жаахан үнэтэй. Сурагчийн хөнгөлөлт байна уу?", 1], ["싸요!", "ssayo!", "Хямдхан!", 0, "Хөнгөлөлт асуух гэж байгаа шүү дээ 😉"], ["백 원 주세요.", "baek won juseyo.", "100 вон өгөөч.", 0, "Та мөнгө төлөх ёстой 😄"]]],
+      ["네, 학생은 팔천 원이에요.", "ne, haksaengeun palcheon wonieyo.", "Тийм, сурагчид 8,000 вон.", [["칠천 원이에요?", "chilcheon wonieyo?", "7,000 вон уу?", 0, "팔천 = 8,000, 칠천 = 7,000."], ["좋아요, 여기 있어요!", "joayo, yeogi isseoyo!", "Сайн байна, энд байна!", 1]]],
+      ["감사합니다. 즐거운 관람 되세요!", "gamsahamnida. jeulgeoun gwallam doeseyo!", "Баярлалаа. Сайхан үзээрэй!", [["감사합니다!", "gamsahamnida!", "Баярлалаа!", 1], ["잘 먹겠습니다!", "jal meokgesseumnida!", "Сайхан идье!", 0, "Энийг хоолны өмнө хэлдэг 😄"]]]
+    ] },
+  { id: "lock", ic: "🔒", who: "자물쇠 가게", whoMn: "цоожны лангуу", task: "Хайрын цоож аваад хашлага дээр зүү", cost: 12000, item: "🔒 사랑의 자물쇠", voice: { pitch: .95, rate: .9 }, at: [-17, -38.5, .45],
+    look: { skin: 2, eyes: 3, brows: 1, nose: 3, mouth: 4, cheeks: 1, hair: 8, hairColor: 1, top: 2, topColor: 3, bottom: 0, bottomColor: 1, shoes: 1, shoeColor: 1, hat: 2, glasses: 0, back: 0, hand: 0, move: 1, build: 55, height: 40 },
+    steps: [
+      ["어서 오세요! 자물쇠 사시겠어요?", "eoseo oseyo! jamulsoe sasigesseoyo?", "Тавтай морил! Цоож авах уу?", [["자물쇠가 뭐예요?", "jamulsoega mwoyeyo?", "Цоож гэж юу вэ?", 0, "자물쇠 = цоож. Та харж л байна шүү дээ 🙂"], ["네, 자물쇠 하나 주세요.", "ne, jamulsoe hana juseyo.", "Тийм, нэг цоож өгөөч.", 1], ["아니요, 열쇠 주세요.", "aniyo, yeolsoe juseyo.", "Үгүй, түлхүүр өгөөч.", 0, "열쇠 = түлхүүр. Хэрэгтэй нь цоож (자물쇠)."]]],
+      ["무슨 색으로 드릴까요?", "museun saegeuro deurilkkayo?", "Ямар өнгийнхийг өгөх вэ?", [["빨리 주세요.", "ppalli juseyo.", "Хурдан өгөөч.", 0, "빨리 = хурдан. Улаан бол 빨간색."], ["빨간색으로 주세요.", "ppalgansaegeuro juseyo.", "Улаан өнгийнхийг өгөөч.", 1], ["색깔이 없어요.", "saekkkari eopseoyo.", "Өнгө байхгүй.", 0, "Өнгөө сонгоорой: 빨간색 (улаан), 파란색 (цэнхэр)…"]]],
+      ["이름도 써 드릴까요?", "ireumdo sseo deurilkkayo?", "Нэрийг нь бичиж өгөх үү?", [["네, 제 이름을 써 주세요.", "ne, je ireumeul sseo juseyo.", "Тийм, миний нэрийг бичээд өгөөч.", 1], ["이름이 뭐예요?", "ireumi mwoyeyo?", "Таны нэр хэн бэ?", 0, "Та худалдагчийн нэрийг асууж байна 😄"], ["몰라요.", "mollayo.", "Мэдэхгүй.", 0, "Өөрийнхөө нэрийг мэдэлгүй яахав 😄"]]],
+      ["만 이천 원입니다.", "man icheon wonimnida.", "12,000 вон.", [["천이백 원이요?", "cheonibaek woniyo?", "1,200 вон уу?", 0, "만 이천 = 12,000. 천이백 = 1,200."], ["카드로 할게요.", "kadeuro halgeyo.", "Картаар төлье.", 1]]],
+      ["여기 있어요. 저기 난간에 걸면 돼요!", "yeogi isseoyo. jeogi nanggane geolmyeon dwaeyo!", "Энд байна. Тэр хашлага дээр зүүчихэд болно!", [["감사합니다!", "gamsahamnida!", "Баярлалаа!", 1], ["미안합니다.", "mianhamnida.", "Уучлаарай.", 0, "Уучлалт гуйх юм алга, талархаарай 🙂"]]]
+    ], after: "hang" },
+  { id: "photo", ic: "📷", who: "관광객", whoMn: "аялагч", task: "Солонгос аялагчдын зургийг авч өг", cost: 0, item: "📷 고마움", voice: { pitch: 1.25, rate: .95 }, at: [18, 44.2, 3.6],
+    look: { skin: 0, eyes: 5, brows: 1, nose: 1, mouth: 1, cheeks: 1, hair: 6, hairColor: 2, top: 1, topColor: 7, bottom: 2, bottomColor: 2, shoes: 0, shoeColor: 0, hat: 0, glasses: 0, back: 0, hand: 0, move: 1, build: 20, height: 40 },
+    steps: [
+      ["저기요, 사진 좀 찍어 주시겠어요?", "jeogiyo, sajin jom jjigeo jusigesseoyo?", "Уучлаарай, зураг авч өгөхгүй юу?", [["아니요, 바빠요.", "aniyo, bappayo.", "Үгүй, завгүй байна.", 0, "Хэтэрхий бүдүүлэг байна 😅 Тусалъя!"], ["네, 좋아요!", "ne, joayo!", "Тийм, болно!", 1], ["사진이 없어요.", "sajini eopseoyo.", "Зураг байхгүй.", 0, "Тэд зураг авахуулахыг хүсэж байна."]]],
+      ["타워가 나오게 찍어 주세요.", "tawoga naoge jjigeo juseyo.", "Цамхаг харагдахаар аваарай.", [["타워가 어디예요?", "tawoga eodiyeyo?", "Цамхаг хаана байна?", 0, "Яг ард чинь байна шүү дээ 😄"], ["알겠어요. 하나, 둘, 셋!", "algesseoyo. hana, dul, set!", "Ойлголоо. Нэг, хоёр, гурав!", 1]]],
+      ["와, 정말 잘 나왔어요! 고마워요.", "wa, jeongmal jal nawasseoyo! gomawoyo.", "Хөөх, үнэхээр сайхан гарсан байна! Баярлалаа.", [["천만에요!", "cheonmaneyo!", "Зүгээр ээ!", 1], ["잘 나왔어요?", "jal nawasseoyo?", "Сайхан гарсан уу?", 0, "Тэд аль хэдийн сайхан гарсан гэлээ. Талархалд «천만에요»."]]],
+      ["어디에서 왔어요?", "eodieseo wasseoyo?", "Хаанаас ирсэн бэ?", [["몽골에 가요.", "monggore gayo.", "Монгол руу явна.", 0, "-에 가요 = …руу явна. Ирсэн газар: «-에서 왔어요»."], ["몽골에서 왔어요.", "monggoreseo wasseoyo.", "Монголоос ирсэн.", 1], ["몽골 사람이에요?", "monggol saramieyo?", "Монгол хүн үү?", 0, "Та өөрөө асуулт асууж байна 😄"]]]
+    ] },
+  { id: "cable", ic: "🚡", who: "케이블카 직원", whoMn: "кабель тэрэгний ажилтан", task: "Кабель тэрэгний хоёр талын тасалбар ав", cost: 14000, item: "🚡 왕복 표", voice: { pitch: .85, rate: .92 }, at: [27.5, -20.5, -2.3],
+    look: { skin: 1, eyes: 0, brows: 2, nose: 2, mouth: 0, cheeks: 0, hair: 1, hairColor: 0, top: 6, topColor: 1, bottom: 0, bottomColor: 1, shoes: 1, shoeColor: 1, hat: 1, glasses: 0, back: 0, hand: 0, move: 1, build: 45, height: 60 },
+    steps: [
+      ["케이블카 타실 거예요?", "keibeulka tasil geoyeyo?", "Кабель тэргэнд суух уу?", [["택시 타요.", "taeksi tayo.", "Такси сууна.", 0, "Кабель тэрэгний тасалбар авах гэж ирсэн шүү дээ."], ["네, 왕복 표 한 장 주세요.", "ne, wangbok pyo han jang juseyo.", "Тийм, нэг хоёр талын тасалбар өгөөч.", 1], ["케이블카가 뭐예요?", "keibeulkaga mwoyeyo?", "Кабель тэрэг гэж юу вэ?", 0, "케이블카 = кабель тэрэг 🚡"]]],
+      ["왕복은 만 사천 원이에요.", "wangbogeun man sacheon wonieyo.", "Хоёр тал 14,000 вон.", [["여기 있어요.", "yeogi isseoyo.", "Энд байна.", 1], ["너무 싸요.", "neomu ssayo.", "Хэтэрхий хямд.", 0, "14,000 вон хямд биш ээ 😄"]]],
+      ["다음 케이블카는 십 분 후에 출발해요.", "daeum keibeulkaneun sip bun hue chulbalhaeyo.", "Дараагийн тэрэг 10 минутын дараа хөдөлнө.", [["십 분 전이에요?", "sip bun jeonieyo?", "10 минутын өмнө үү?", 0, "후 = дараа, 전 = өмнө."], ["알겠습니다, 감사합니다!", "algetseumnida, gamsahamnida!", "Ойлголоо, баярлалаа!", 1]]]
+    ] }
+];
+let prog = store.get("namsan-progress", null) || { done: {}, money: 50000, items: [], lock: null }; prog.done ||= {}; prog.items ||= [];
+const saveProg = () => store.set("namsan-progress", prog);
+const npcs = [];
+function buildNPCs() {
+  // the lock kiosk
+  box("paint", 3.2, 1.1, 1.6, -17.6, 0, -40.2, "#b7322a", .45); box("wood", 3.4, .12, 1.8, -17.6, 1.1, -40.2, "#ffffff", .45);
+  for (const [dx, dz] of [[-1.5, -.7], [1.5, -.7], [-1.5, .7], [1.5, .7]]) { const a = .45, x = -17.6 + dx * Math.cos(a) + dz * Math.sin(a), z = -40.2 - dx * Math.sin(a) + dz * Math.cos(a); cyl("metal", .05, .05, 2.6, x, 0, z, "#3a3f46", 6); }
+  put("paint", new THREE.BoxGeometry(3.8, .15, 2.4), "#e8b22a", -17.6, 2.65, -40.2, .45);
+  const ks = new THREE.Mesh(new THREE.PlaneGeometry(3, .75), new THREE.MeshStandardMaterial({ map: signTex("사랑의 자물쇠", "Хайрын цоож", "#b7322a"), roughness: .6 })); ks.position.set(-17.6 + Math.sin(.45) * 1.25, 2.2, -40.2 + Math.cos(.45) * 1.25); ks.rotation.y = .45; scene.add(ks); ring(2, -17.6, -40.2);
+  // the ticket desk at the tower's door
+  box("stone", 3, 1.1, .8, 0, 0, 14.9, "#d9d2c6"); const ts = new THREE.Mesh(new THREE.PlaneGeometry(2.6, .65), new THREE.MeshStandardMaterial({ map: signTex("매표소", "Тасалбар", "#1f2b3a"), roughness: .6 })); ts.position.set(0, .7, 15.31); scene.add(ts);
+  for (const q of QUESTS) {
+    const [x, z, ry] = q.at, ch = AV.build(q.look); ch.position.set(x, 0, z); ch.rotation.y = ry; scene.add(ch);
+    const tag = labelSprite(q.who, "#e2574cdd"); tag.position.y = ch.userData.height + .25; ch.add(tag);
+    const mark = labelSprite("!", "#ffc93c", "#1b1f2a"); mark.scale.set(.8, .8, 1); mark.position.y = ch.userData.height + .95; ch.add(mark);
+    if (q.id === "photo") { const fr = AV.build({ ...q.look, hair: 1, hairColor: 0, top: 2, topColor: 1, bottom: 0, eyes: 1, build: 50, height: 70 }); fr.position.set(x + 1.1, 0, z + .3); fr.rotation.y = ry; fr.userData.emote = "wave"; scene.add(fr); npcs.push({ q: null, ch: fr, x: x + 1.1, z: z + .3, ry }); ring(.5, x + 1.1, z + .3); }
+    ring(.55, x, z); npcs.push({ q, ch, x, z, ry, mark });
+  }
+  if (prog.lock) hangLock(prog.lock.x, prog.lock.z, false);
+}
+function hangLock(x, z, fresh = true) {
+  const a = Math.atan2(z, x), r = PLAZA_R - .02, g = new THREE.Group(), gold = new THREE.MeshStandardMaterial({ color: "#d8473c", metalness: .6, roughness: .3 });
+  const body = new THREE.Mesh(new THREE.BoxGeometry(.28, .3, .1), gold), shackle = new THREE.Mesh(new THREE.TorusGeometry(.09, .022, 8, 20, Math.PI), new THREE.MeshStandardMaterial({ color: "#c9ccd1", metalness: .9, roughness: .25 }));
+  shackle.position.y = .15; g.add(body, shackle); g.position.set(Math.cos(a) * r, .95, Math.sin(a) * r); g.rotation.y = -a + Math.PI / 2; scene.add(g);
+  if (buddy.name || fresh) { const t = labelSprite("♥ " + (buddy.name || "나"), "#d8473cdd"); t.scale.set(1.4, .35, 1); t.position.y = .45; g.add(t); }
+  if (fresh) { prog.lock = { x: g.position.x, z: g.position.z }; prog.items.push("🔒 자물쇠 → 남산"); saveProg(); sfx.win(); passed("Цоожоо зүүлээ! 🔒", "Хайрын цоож тань Намсанд үүрд үлдэнэ."); renderQuests(); }
+}
+/* ---------- dialog ---------- */
+let D = null, activeQ = null;
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+function nearNPC() { let best = null, bd = 3.3; for (const n of npcs) if (n.q) { const d = Math.hypot(P.x - n.x, P.z - n.z); if (d < bd) { bd = d; best = n; } } return best; }
+const needsHang = () => prog.done.lock && !prog.lock;
+const atRailing = () => Math.hypot(P.x, P.z) > PLAZA_R - 2.2;
+function interact() {
+  if (D || !P.ch) return;
+  if (needsHang() && atRailing()) { const a = Math.atan2(P.z, P.x); P.ry = Math.atan2(Math.cos(a), Math.sin(a)); hangLock(Math.cos(a) * PLAZA_R, Math.sin(a) * PLAZA_R); return; }
+  const n = nearNPC(); if (!n) return; const q = n.q;
+  n.ch.rotation.y = Math.atan2(P.x - n.x, P.z - n.z); P.ry = Math.atan2(n.x - P.x, n.z - P.z);
+  if (prog.done[q.id]) { const l = ["또 오세요! 😊", "안녕하세요! 또 만났네요.", "좋은 하루 보내세요!"][(Math.random() * 3) | 0]; bubble(n.ch, l); speak(l, q.voice); return; }
+  if (prog.money < q.cost) { hint("Мөнгө хүрэлцэхгүй байна 😢", 3000); return; }
+  D = { n, q, step: 0, wrong: 0, hint: false };
+  camYaw = P.ry + Math.PI + .85; camPitch = .1; camDist = Math.min(camDist, 4.6);
+  $("dlg").style.display = "flex"; $("dlg").classList.remove("hint"); showStep();
+}
+function showStep() {
+  const [ko, rom, mn, chs] = D.q.steps[D.step];
+  $("dWho").textContent = `${D.q.who} · ${D.q.whoMn}`; $("dStep").textContent = `${D.step + 1}/${D.q.steps.length}`;
+  $("dLine").textContent = ko; $("dRom").textContent = rom; $("dMn").textContent = "🇲🇳 " + mn; $("dFb").className = "fb"; $("dFb").textContent = "";
+  const order = chs.map((c, i) => i).sort(() => Math.random() - .5); $("dChs").innerHTML = "";
+  order.forEach((i, k) => { const c = chs[i], b = document.createElement("button"); b.className = "ch"; b.innerHTML = `<div class="ck">${k + 1}. ${esc(c[0])}</div><div class="cr">${esc(c[1])}</div><div class="cm">🇲🇳 ${esc(c[2])}</div>`; b.onclick = () => answer(b, c); b._c = c; $("dChs").appendChild(b); });
+  bubble(D.n.ch, ko); speak(ko, D.q.voice);
+}
+function answer(b, c, spoken) {
+  if (!D || D.lock) return;
+  if (c[3]) {
+    b.classList.add("good"); D.lock = true; sfx.ok(); bubble(P.ch, c[0]); speak(c[0], { pitch: 1.05, rate: .95, player: true });
+    $("dFb").className = "fb good"; $("dFb").textContent = (spoken ? "🎤 " : "") + ["잘했어요! Сайн байна!", "맞아요! Зөв!", "완벽해요! Төгс!"][(Math.random() * 3) | 0];
+    setTimeout(() => { if (!D) return; D.lock = false; D.step++; if (D.step < D.q.steps.length) showStep(); else finish(); }, 1700);
+  } else { b.classList.add("bad"); D.wrong++; sfx.bad(); $("dFb").className = "fb bad"; $("dFb").textContent = "✗ " + (c[4] || "Буруу байна, дахин оролдоорой."); b.querySelector(".cm").style.display = "block"; }
+}
+function finish() {
+  const q = D.q, stars = Math.max(1, 3 - D.wrong - (D.hint ? 1 : 0));
+  prog.done[q.id] = stars; prog.money -= q.cost; prog.items.push(q.item); saveProg(); closeDlg(); renderQuests(); sfx.win();
+  passed("Даалгавар биеллээ!", `${q.item}  ${"★".repeat(stars)}${"☆".repeat(3 - stars)}${q.cost ? "  −₩" + q.cost.toLocaleString() : ""}`);
+  if (q.after === "hang") setTimeout(() => hint("🔒 Одоо тавцангийн <b>хашлага</b> руу очоод <b>E</b> (💬) дарж цоожоо зүү", 6000), 3400);
+  P.ch.userData.emote = "dance"; P.emoteT = 3;
+}
+function closeDlg() { $("dlg").style.display = "none"; D = null; if ("speechSynthesis" in window) speechSynthesis.cancel(); stopListen(); }
+let passT; function passed(t1, t2) { $("pT1").textContent = t1; $("pT2").textContent = t2; $("passed").classList.add("on"); clearTimeout(passT); passT = setTimeout(() => $("passed").classList.remove("on"), 3200); }
+function renderQuests() {
+  if (!activeQ || prog.done[activeQ]) activeQ = (QUESTS.find(q => !prog.done[q.id]) || {}).id || null;
+  const n = QUESTS.filter(q => prog.done[q.id]).length; $("qcount").textContent = `${n}/${QUESTS.length}`; $("money").textContent = "₩" + prog.money.toLocaleString();
+  $("qlist").innerHTML = QUESTS.map(q => { const d = prog.done[q.id], hang = q.id === "lock" && d && !prog.lock; return `<button class="q${d && !hang ? " done" : ""}${q.id === activeQ || hang ? " on" : ""}" data-id="${q.id}"><span class="ic">${d && !hang ? "✅" : q.ic}</span><span><span class="t">${esc(hang ? "Цоожоо хашлага дээр зүү" : q.task)}</span><br><span style="font-family:var(--ko);font-size:12px;color:var(--muted)">${esc(q.who)}</span>${d ? ` <span class="stars">${"★".repeat(d)}${"☆".repeat(3 - d)}</span>` : ""}</span></button>`; }).join("");
+  $("qlist").querySelectorAll(".q").forEach(b => b.onclick = () => { activeQ = b.dataset.id; renderQuests(); });
+  for (const nn of npcs) if (nn.mark) nn.mark.visible = !prog.done[nn.q.id];
+  if (n === QUESTS.length && prog.lock && !prog.finished) { prog.finished = true; saveProg(); setTimeout(() => passed("축하합니다! 🎉", "Намсангийн бүх даалгаврыг биелүүллээ!"), 3600); }
+}
+$("dX").onclick = closeDlg; $("dSay").onclick = () => D && speak(D.q.steps[D.step][0], D.q.voice);
+$("dHint").onclick = () => { if (!D) return; $("dlg").classList.toggle("hint"); if ($("dlg").classList.contains("hint")) D.hint = true; };
+$("qmin").onclick = () => { $("quests").classList.toggle("min"); $("qmin").textContent = $("quests").classList.contains("min") ? "+" : "–"; };
+if (innerWidth < 760) { $("quests").classList.add("min"); $("qmin").textContent = "+"; }
+$("bTalk").addEventListener("click", () => interact());
+
+/* ================= AUDIO ================= */
+// Korean voices for people (speech synthesis) + answering out loud (speech recognition) + ambience made with WebAudio.
+let koVoices = [];
+function loadVoices() { koVoices = speechSynthesis.getVoices().filter(v => /^ko/i.test(v.lang)); }
+if ("speechSynthesis" in window) { loadVoices(); speechSynthesis.onvoiceschanged = loadVoices; }
+function speak(text, o = {}) {
+  if (!("speechSynthesis" in window) || !soundOn) return; speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(text.replace(/\(.*?\)/g, "")); u.lang = "ko-KR";
+  if (koVoices.length) u.voice = koVoices[o.player ? koVoices.length - 1 : (o.pitch > 1 ? 0 : Math.min(1, koVoices.length - 1))];
+  u.pitch = o.pitch || 1; u.rate = o.rate || .92; u.volume = 1; speechSynthesis.speak(u);
+}
+const SR = window.SpeechRecognition || window.webkitSpeechRecognition; let rec = null;
+function stopListen() { if (rec) { try { rec.abort(); } catch {} rec = null; } $("dMic").classList.remove("on"); }
+const norm = s => s.replace(/[^가-힣a-z0-9]/gi, "");
+function similarity(a, b) { a = norm(a); b = norm(b); if (!a || !b) return 0; const m = Array.from({ length: a.length + 1 }, (_, i) => [i]); for (let j = 1; j <= b.length; j++) m[0][j] = j; for (let i = 1; i <= a.length; i++) for (let j = 1; j <= b.length; j++) m[i][j] = Math.min(m[i - 1][j] + 1, m[i][j - 1] + 1, m[i - 1][j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1)); return 1 - m[a.length][b.length] / Math.max(a.length, b.length); }
+$("dMic").onclick = () => {
+  if (!SR) { $("dFb").className = "fb bad"; $("dFb").textContent = "Энэ хөтөч дуу таньдаггүй. Chrome эсвэл Edge ашиглаарай."; return; }
+  if (rec) { stopListen(); return; }
+  if ("speechSynthesis" in window) speechSynthesis.cancel();
+  rec = new SR(); rec.lang = "ko-KR"; rec.interimResults = false; rec.maxAlternatives = 3; $("dMic").classList.add("on");
+  $("dFb").className = "fb good"; $("dFb").textContent = "🎤 Сонсож байна… солонгосоор хариулаарай";
+  rec.onresult = e => {
+    const alts = [...e.results[0]].map(r => r.transcript); let best = null, bs = 0;
+    for (const b of $("dChs").children) for (const t of alts) { const s = similarity(t, b._c[0]); if (s > bs) { bs = s; best = b; } }
+    stopListen();
+    if (best && bs >= .55) answer(best, best._c, true);
+    else { $("dFb").className = "fb bad"; $("dFb").textContent = `🎤 «${alts[0] || "…"}» гэж сонсогдлоо. Дахин оролдоорой.`; sfx.bad(); }
+  };
+  rec.onerror = () => { stopListen(); $("dFb").className = "fb bad"; $("dFb").textContent = "Микрофон ажиллахгүй байна. Зөвшөөрлөө шалгаарай."; };
+  rec.onend = () => { if (rec) stopListen(); };
+  try { rec.start(); } catch { stopListen(); }
+};
+let AC = null, soundOn = store.get("namsan-sound", true), master = null;
+function startAudio() {
+  if (AC || !soundOn) return; const C = window.AudioContext || window.webkitAudioContext; if (!C) return;
+  AC = new C(); master = AC.createGain(); master.gain.value = .55; master.connect(AC.destination);
+  const noise = (sec, brown) => { const b = AC.createBuffer(1, AC.sampleRate * sec, AC.sampleRate), d = b.getChannelData(0); let last = 0; for (let i = 0; i < d.length; i++) { const w = Math.random() * 2 - 1; if (brown) { last = (last + .02 * w) / 1.02; d[i] = last * 3.5; } else d[i] = w; } return b; };
+  // wind on the summit: brown noise through a slowly swept band-pass
+  const wind = AC.createBufferSource(); wind.buffer = noise(6, true); wind.loop = true; const wf = AC.createBiquadFilter(); wf.type = "bandpass"; wf.frequency.value = 400; wf.Q.value = .6; const wg = AC.createGain(); wg.gain.value = .35; wind.connect(wf).connect(wg).connect(master); wind.start();
+  const lfo = AC.createOscillator(), lg = AC.createGain(); lfo.frequency.value = .07; lg.gain.value = 260; lfo.connect(lg).connect(wf.frequency); lfo.start();
+  // the city far below: low rumble
+  const city = AC.createBufferSource(); city.buffer = noise(5, true); city.loop = true; const cf = AC.createBiquadFilter(); cf.type = "lowpass"; cf.frequency.value = 160; const cg = AC.createGain(); cg.gain.value = .5; city.connect(cf).connect(cg).connect(master); city.start();
+  // birds now and then (magpies are everywhere on Namsan)
+  const chirp = () => { if (!AC) return; const t = AC.currentTime, n = 2 + (Math.random() * 4 | 0), f0 = R(2200, 3600); for (let i = 0; i < n; i++) { const o = AC.createOscillator(), g = AC.createGain(), s = t + i * R(.09, .16); o.type = "sine"; o.frequency.setValueAtTime(f0, s); o.frequency.exponentialRampToValueAtTime(f0 * R(1.2, 1.6), s + .06); g.gain.setValueAtTime(0, s); g.gain.linearRampToValueAtTime(.05, s + .01); g.gain.exponentialRampToValueAtTime(.0001, s + .08); o.connect(g).connect(master); o.start(s); o.stop(s + .1); } setTimeout(chirp, R(2500, 9000)); };
+  setTimeout(chirp, 1500);
+}
+const tone = (f, s, d, type = "sine", v = .18) => { if (!AC || !soundOn) return; const t = AC.currentTime + s, o = AC.createOscillator(), g = AC.createGain(); o.type = type; o.frequency.value = f; g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(v, t + .015); g.gain.exponentialRampToValueAtTime(.0001, t + d); o.connect(g).connect(master); o.start(t); o.stop(t + d + .05); };
+const sfx = { ok: () => { tone(880, 0, .18); tone(1320, .09, .28); }, bad: () => { tone(220, 0, .25, "triangle", .15); tone(185, .1, .3, "triangle", .12); }, win: () => [523, 659, 784, 1047].forEach((f, i) => tone(f, i * .11, .4, "triangle", .16)) };
+function setSound(on) { soundOn = on; store.set("namsan-sound", on); $("snd").textContent = on ? "🔊" : "🔇"; if (master) master.gain.value = on ? .55 : 0; if (on) startAudio(); else if ("speechSynthesis" in window) speechSynthesis.cancel(); }
+$("snd").onclick = () => setSound(!soundOn);
+addEventListener("pointerdown", () => startAudio(), { once: true }); addEventListener("keydown", () => startAudio(), { once: true });
+
+/* ================= PLAYER ================= */
+const P = { x: 0, z: 34, y: 0, vy: 0, ry: Math.PI, speed: 0, ground: true, ch: null, emoteT: 0 };
+function setPlayer() {
+  if (P.ch) scene.remove(P.ch);
+  P.ch = AV.build(buddy.look, AV.shapeFor(buddy.energy)); scene.add(P.ch);
+  if (buddy.name) { const tag = labelSprite(buddy.name); tag.position.y = P.ch.userData.height + .25; P.ch.add(tag); }
+  $("src").className = "src " + (demo ? "demo" : "ok"); $("src").textContent = demo ? "Жишээ дүр" : `TriBee дүр ✓${buddy.name ? " · " + buddy.name : ""}`; $("rnd").hidden = !demo; $("note").hidden = !demo;
+}
+$("rnd").onclick = () => { buddy.look = AV.random(); setPlayer(); canvas.focus(); };
+function emote(m) { P.ch.userData.emote = m === "calm" ? null : m; P.emoteT = m === "calm" ? 0 : 6; document.querySelectorAll("#emotes button").forEach(b => b.classList.toggle("on", b.dataset.m === m && m !== "calm")); }
+document.querySelectorAll("#emotes button").forEach(b => b.onclick = () => { emote(b.dataset.m); canvas.focus(); });
+function moveTo(nx, nz) {
+  const r = Math.hypot(nx, nz), lim = PLAZA_R - .9; if (r > lim) { nx *= lim / r; nz *= lim / r; }
+  for (const c of colliders) { const dx = nx - c.x, dz = nz - c.z, d = Math.hypot(dx, dz), m = c.r + .45; if (d < m && d > 1e-4) { nx = c.x + dx / d * m; nz = c.z + dz / d * m; } }
+  for (const p of tourists) { const q = p.ch.position, dx = nx - q.x, dz = nz - q.z, d = Math.hypot(dx, dz); if (d < .8 && d > 1e-4) { nx = q.x + dx / d * .8; nz = q.z + dz / d * .8; } }
+  P.x = nx; P.z = nz;
+}
+
+/* ================= INPUT ================= */
+const keys = {}; let camYaw = 0, camPitch = .12, camDist = 7, joy = { x: 0, y: 0, id: null }, runToggle = false, jumpReq = false, drag = null, pinch0 = 0;
+addEventListener("keydown", e => { if (D) { if (/^Digit[1-4]$/.test(e.code)) { const b = $("dChs").children[+e.code.slice(5) - 1]; b && b.click(); } if (e.code === "Escape") closeDlg(); return; } if (e.code === "KeyE" || e.code === "KeyF") interact(); keys[e.code] = true; if (e.code === "Space") { jumpReq = true; e.preventDefault(); } const n = { Digit1: "calm", Digit2: "wave", Digit3: "dance", Digit4: "jump" }[e.code]; if (n) emote(n); });
+addEventListener("keyup", e => keys[e.code] = false);
+addEventListener("blur", () => { for (const k in keys) keys[k] = false; });
+canvas.addEventListener("pointerdown", e => { drag = { id: e.pointerId, x: e.clientX, y: e.clientY }; canvas.setPointerCapture(e.pointerId); canvas.focus(); });
+canvas.addEventListener("pointermove", e => { if (!drag || drag.id !== e.pointerId) return; const s = e.pointerType === "touch" ? .006 : .005; camYaw -= (e.clientX - drag.x) * s; camPitch = Math.max(-.75, Math.min(1.2, camPitch + (e.clientY - drag.y) * s)); drag.x = e.clientX; drag.y = e.clientY; });
+const endDrag = e => { if (drag && drag.id === e.pointerId) drag = null; };
+canvas.addEventListener("pointerup", endDrag); canvas.addEventListener("pointercancel", endDrag);
+canvas.addEventListener("wheel", e => { e.preventDefault(); camDist = Math.max(2.5, Math.min(30, camDist + e.deltaY * .012)); }, { passive: false });
+canvas.addEventListener("touchstart", e => { if (e.touches.length === 2) pinch0 = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY); }, { passive: true });
+canvas.addEventListener("touchmove", e => { if (e.touches.length === 2 && pinch0) { const d = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY); camDist = Math.max(2.5, Math.min(30, camDist * pinch0 / d)); pinch0 = d; drag = null; } }, { passive: true });
+const joyEl = $("joy"), knob = $("knob");
+joyEl.addEventListener("pointerdown", e => { joy.id = e.pointerId; joyEl.setPointerCapture(e.pointerId); joyMove(e); });
+joyEl.addEventListener("pointermove", e => { if (e.pointerId === joy.id) joyMove(e); });
+const joyEnd = e => { if (e.pointerId !== joy.id) return; joy = { x: 0, y: 0, id: null }; knob.style.transform = ""; };
+joyEl.addEventListener("pointerup", joyEnd); joyEl.addEventListener("pointercancel", joyEnd);
+function joyMove(e) { const r = joyEl.getBoundingClientRect(), mx = r.width / 2; let dx = e.clientX - r.left - mx, dy = e.clientY - r.top - mx; const d = Math.hypot(dx, dy), lim = mx - 10; if (d > lim) { dx *= lim / d; dy *= lim / d; } joy.x = dx / lim; joy.y = dy / lim; knob.style.transform = `translate(${dx}px,${dy}px)`; }
+$("bJump").addEventListener("pointerdown", e => { e.preventDefault(); jumpReq = true; });
+$("bRun").addEventListener("click", () => { runToggle = !runToggle; $("bRun").classList.toggle("on", runToggle); });
+
+/* ================= LOOP ================= */
+function resize() {
+  const w = innerWidth, h = innerHeight, W = Math.round(w * PR), H = Math.round(h * PR);
+  renderer.setSize(w, h, false); canvas.width = W; canvas.height = H; renderer.setViewport(0, 0, W, H);
+  RT.setSize(W, H); bloomA.setSize(W >> 2, H >> 2); bloomB.setSize(W >> 2, H >> 2);
+  camera.aspect = w / h; camera.fov = w < h ? 66 : 55; camera.updateProjectionMatrix();
+}
+addEventListener("resize", resize);
+const clock = new THREE.Clock(), _t = new THREE.Vector3(), _d = new THREE.Vector3(), _cp = new THREE.Vector3();
+function tick() {
+  requestAnimationFrame(tick);
+  const dt = Math.min(clock.getDelta(), .05), t = clock.elapsedTime;
+  let ix = 0, iz = 0;
+  if (keys.KeyW || keys.ArrowUp) iz += 1; if (keys.KeyS || keys.ArrowDown) iz -= 1; if (keys.KeyA || keys.ArrowLeft) ix -= 1; if (keys.KeyD || keys.ArrowRight) ix += 1;
+  if (joy.id !== null) { ix += joy.x; iz -= joy.y; }
+  if (D) ix = iz = 0;
+  const mag = Math.min(1, Math.hypot(ix, iz)), run = keys.ShiftLeft || keys.ShiftRight || runToggle || (joy.id !== null && Math.hypot(joy.x, joy.y) > .95);
+  P.speed += ((mag > .05 ? (run ? 8 : 4) * mag : 0) - P.speed) * (1 - Math.exp(-dt * 10));
+  if (mag > .05) { if (P.emoteT > 0) emote("calm"); const sy = Math.sin(camYaw), cy = Math.cos(camYaw), dx = -sy * iz + cy * ix, dz = -cy * iz - sy * ix; let d = Math.atan2(dx, dz) - P.ry; d = Math.atan2(Math.sin(d), Math.cos(d)); P.ry += d * (1 - Math.exp(-dt * 12)); const l = Math.hypot(dx, dz) || 1; moveTo(P.x + dx / l * P.speed * dt, P.z + dz / l * P.speed * dt); }
+  else if (P.speed > .1) moveTo(P.x + Math.sin(P.ry) * P.speed * dt, P.z + Math.cos(P.ry) * P.speed * dt);
+  if (P.emoteT > 0 && (P.emoteT -= dt) <= 0) emote("calm");
+  if (jumpReq && P.ground) { P.vy = 7.5; P.ground = false; } jumpReq = false;
+  P.vy -= 22 * dt; P.y += P.vy * dt; if (P.y <= 0) { P.y = 0; P.vy = 0; P.ground = true; }
+  P.ch.position.set(P.x, P.y, P.z); P.ch.rotation.y = P.ry; AV.animate(P.ch, P.speed, !P.ground, dt, t);
+  // third-person camera; it never passes through the tower
+  _t.set(P.x, P.y + 1.55, P.z);
+  _d.set(Math.sin(camYaw) * Math.cos(camPitch), Math.sin(camPitch), Math.cos(camYaw) * Math.cos(camPitch));
+  let dist = camDist; for (let s = 1; s <= 12; s++) { const k = s / 12 * dist, x = _t.x + _d.x * k, z = _t.z + _d.z * k, y = _t.y + _d.y * k; if (y < 9 && Math.hypot(x, z) < 14.6) { dist = Math.max(1.8, k - .5); break; } }
+  _cp.copy(_t).addScaledVector(_d, dist); _cp.y = Math.max(_cp.y, .35);
+  camera.position.lerp(_cp, 1 - Math.exp(-dt * 14)); camera.lookAt(_t.x, _t.y + Math.max(0, -camPitch) * 4, _t.z);
+  sky.position.copy(camera.position);
+  sun.position.set(P.x + SUN_DIR.x * 250, SUN_DIR.y * 250, P.z + SUN_DIR.z * 250); sun.target.position.set(P.x, 0, P.z);
+  updateTourists(dt, t);
+  for (const n of npcs) { if (n.mark) n.mark.position.y = n.ch.userData.height + .95 + Math.sin(t * 3) * .1; AV.animate(n.ch, 0, false, dt, t); }
+  { const n = !D ? nearNPC() : null, hang = !D && needsHang() && atRailing(), show = n || hang;
+    $("prompt").style.display = show && !isTouch ? "flex" : "none"; $("bTalk").style.display = show ? "grid" : "none";
+    if (show) $("promptT").innerHTML = hang ? "Цоожоо зүүх 🔒" : `<span style="font-family:var(--ko)">${esc(n.q.who)}</span>-тэй ярих${prog.done[n.q.id] ? " ✓" : ""}`; }
+  for (const c of cabins) { c.f += c.dir * dt * .012; if (c.f > .97 || c.f < .03) { c.dir *= -1; c.f = Math.max(.03, Math.min(.97, c.f)); } const p = cablePoint(c.f, c.off); c.g.position.set(p.x, p.y - 3.2, p.z); c.g.rotation.y = Math.atan2(CABLE.x1 - CABLE.x0, CABLE.z1 - CABLE.z0) + Math.PI / 2; }
+  windUniform.value = t;
+  for (const ch of [P.ch, ...tourists.map(p => p.ch)]) if (ch.userData.bub && (ch.userData.bubT -= dt) <= 0) { ch.remove(ch.userData.bub); ch.userData.bub = null; }
+  // render → bloom → tone map
+  renderer.setRenderTarget(RT); renderer.render(scene, camera);
+  brightMat.uniforms.t.value = RT.texture; pass(brightMat, bloomA);
+  for (let i = 0; i < 2; i++) { blurMat.uniforms.t.value = bloomA.texture; blurMat.uniforms.dir.value.set(1 / bloomA.width, 0); pass(blurMat, bloomB); blurMat.uniforms.t.value = bloomB.texture; blurMat.uniforms.dir.value.set(0, 1 / bloomA.height); pass(blurMat, bloomA); }
+  pass(finalMat, null);
+}
+
+/* ================= BOOT ================= */
+(async function boot() {
+  try { await Promise.race([Promise.all([document.fonts.load('900 40px "Noto Sans KR"', "남산서울타워케이블카봉수대와멋있다사진찍어주세요서울이다보여요안녕하바람시원해자물쇠걸배고파대박단풍예뻐"), document.fonts.load("800 20px Manrope")]), new Promise(r => setTimeout(r, 3500))]); } catch {}
+  resize(); bakeEnvironment();
+  bucket("stone", std("stone", { roughness: .85 })); bucket("paint", std("paint", { roughness: .55 })); bucket("roof", std("roof", { roughness: .7 })); bucket("metal", std("metal", { roughness: .35, metalness: .8 }));
+  bucket("concrete", new THREE.MeshStandardMaterial({ vertexColors: true, ...material("concrete") })); bucket("glass", new THREE.MeshStandardMaterial({ vertexColors: true, ...material("glass") }));
+  bucket("granite", new THREE.MeshStandardMaterial({ vertexColors: true, ...material("granite") }), false, true); bucket("wood", new THREE.MeshStandardMaterial({ vertexColors: true, ...material("wood") }), false, true);
+  bucket("glow", new THREE.MeshBasicMaterial({ vertexColors: true, toneMapped: false }), false, false);
+  buildTerrain(); buildTower(); buildPlaza(); buildForest(); buildCity(); flush(); buildNPCs(); flush(); buildTourists(); setPlayer(); renderQuests(); setSound(soundOn);
+  $("loading").remove(); $("hud").hidden = false; setTimeout(() => $("help").style.opacity = 0, 14000);
+  if (!demo) hint(`<b>환영합니다${buddy.name ? ", " + buddy.name : ""}!</b> Таны TriBee дүр Намсанд ирлээ 🎉`, 4000);
+  tick();
+})();
+</script>
+</body>
+</html>

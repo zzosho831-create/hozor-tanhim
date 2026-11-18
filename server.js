@@ -9,6 +9,8 @@ const { WebSocketServer } = require("ws");
 const PORT = process.env.PORT || 3000;
 const INDEX = fs.readFileSync(path.join(__dirname, "public", "index.html"));
 const SEOUL = fs.readFileSync(path.join(__dirname, "public", "seoul.html"));
+const STATIC = { "/namsan": ["namsan.html", "text/html; charset=utf-8"], "/tribee-avatar3d.js": ["tribee-avatar3d.js", "application/javascript; charset=utf-8"] };
+const readStatic = f => fs.readFileSync(path.join(__dirname, "public", f));
 const THREE_JS = fs.readFileSync(path.join(path.dirname(require.resolve("three")), "three.min.js"));
 const TURN_MS = 30000, BB = 20, SB = 10, TL_PAY = 10;
 const G = { bj: { min: 1, max: 7, minBal: 10 }, tl: { min: 2, max: 4, minBal: 10 }, pk: { min: 2, max: 8, minBal: 20 } };
@@ -16,6 +18,8 @@ const G = { bj: { min: 1, max: 7, minBal: 10 }, tl: { min: 2, max: 4, minBal: 10
 const server = http.createServer((req, res) => {
   if (req.url === "/health") { res.end("ok"); return; }
   if (req.url.split("?")[0] === "/vendor/three.min.js") { res.writeHead(200, { "content-type": "application/javascript; charset=utf-8", "cache-control": "public, max-age=604800" }); res.end(THREE_JS); return; }
+  const st = STATIC[req.url.split("?")[0].replace(/\/$/, "")];
+  if (st) { res.writeHead(200, { "content-type": st[1], "cache-control": "no-cache" }); res.end(readStatic(st[0])); return; }
   const isSeoul = req.url.split("?")[0].replace(/\/$/, "") === "/seoul";
   res.writeHead(200, { "content-type": "text/html; charset=utf-8", "cache-control": "no-cache" });
   res.end(isSeoul ? SEOUL : INDEX);
