@@ -106,7 +106,7 @@ function build(look,o={}){
  if(bottom==='skirt')B(mid,tw+10,24,td+12,X,hip+10,0,bc);
  const up=joint(mid,X,hip);up.rotation.x=sl*13*Math.PI/180;
  const back=g('back');
- if(back==='backpack')B(up,tw*.74,th*.7,16,X,tTop+th*.42,-td/2-8,'#e2574c');
+ if(back==='backpack')B(up,tw*.74,th*.7,16,X,tTop+th*.42,-td/2-8,o.bagColor||'#e2574c');
  if(back==='cape')B(up,tw+8,th+lh*.55,3,X,tTop+(th+lh*.55)/2+2,-td/2-3,'#e2574c');
  const wings=[];if(back==='wings')for(const s of [-1,1]){const w=joint(up,X,tTop+20,-td/2-3);B(w,44,34,2,X+s*28,tTop+20,-td/2-3,{front:'#ffffff',back:'#e9e6f5',left:'#e9e6f5',right:'#e9e6f5',top:'#ffffff',bottom:'#e9e6f5'});w.userData.side=s;wings.push(w)}
  BT(up,tw,th,td,X,tTop+th/2,0,tc,svgTex('64 64',shirt(top,tc,L),tc,128));
@@ -133,7 +133,7 @@ function build(look,o={}){
    if(hair==='ponytail'){H(14,14,14,X,HT+8,-hd/2-9);H(11,34,11,X,HT+30,-hd/2-12)}
    if(hair==='buns'){H(22,22,22,X-22,HT-13,-4);H(22,22,22,X+22,HT-13,-4)}}}
  const Hb=(w,h,d,x,y,z,c)=>B(head,w,h,d,x,y,z,c);
- if(hat==='cap'){Hb(hw+7,15,hd+7,X,HT-4,0,tc);Hb(hw*.8,4,22,X,HT+3,hd/2+12,shade(tc,.8));Hb(8,5,8,X,HT-13.5,0,shade(tc,.8))}
+ if(hat==='cap'){const cc=o.hatColor||tc;Hb(hw+7,15,hd+7,X,HT-4,0,cc);Hb(hw*.8,4,22,X,HT+3,hd/2+12,shade(cc,.8));Hb(8,5,8,X,HT-13.5,0,shade(cc,.8))}
  if(hat==='beanie'){Hb(hw+7,20,hd+7,X,HT-3,0,tc);Hb(hw+10,9,hd+10,X,HT+6,0,shade(tc,.82));Hb(14,14,14,X,HT-19,0,'#ffffff')}
  if(hat==='headphones'){Hb(hw+12,6,10,X,HT-3,0,INK);Hb(8,24,22,X-hw/2-4.5,hy,0,tc);Hb(8,24,22,X+hw/2+4.5,hy,0,tc)}
  if(hat==='crown'){Hb(hw-6,8,hd-6,X,HT-4,0,'#f2b33d');[-18,0,18].forEach(dx=>{Hb(9,11,9,X+dx,HT-12,hd/2-8,'#f2b33d');Hb(9,11,9,X+dx,HT-12,-hd/2+8,'#f2b33d')});Hb(5,5,3,X,HT-4,hd/2-2,'#e2574c')}

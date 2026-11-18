@@ -72,6 +72,13 @@ button{font:inherit;color:inherit;cursor:pointer;border:0;background:none}
 #passed .t1{font-weight:800;font-size:clamp(28px,6vw,52px);color:#fff;text-shadow:0 4px 24px #0009}#passed .t2{font-weight:700;font-size:clamp(16px,3vw,22px);color:#ffe7a8;text-shadow:0 2px 12px #000a;margin-top:6px}
 #bTalk{right:calc(104px + env(safe-area-inset-right));bottom:calc(30px + env(safe-area-inset-bottom));background:#e2574c;color:#fff;display:none}
 .touch #prompt{bottom:calc(178px + env(safe-area-inset-bottom))}
+#story{border-bottom:1px solid var(--line);padding-bottom:8px;margin-bottom:8px}
+#story .sh{font-size:13px;display:flex;gap:8px;align-items:center}#story .sh b{font-family:var(--ko)}#story .sh span{font-size:11.5px;color:var(--muted);font-weight:700}#stTime{margin-left:auto}
+#story .so{display:flex;gap:8px;align-items:flex-start;margin-top:6px;font-size:13.5px;line-height:1.35;font-weight:600}
+#stNav{display:flex;flex-direction:column;align-items:center;flex:none;width:34px}#stArrow{display:inline-block;width:26px;height:26px;border-radius:50%;background:#ffc93c;color:#1b1f2a;display:grid;place-items:center;font-size:15px;font-weight:900;transition:transform .15s}#stDist{font-size:10.5px;color:var(--muted);font-weight:800}
+.modal{position:fixed;inset:0;display:none;place-items:center;background:#0b122066;z-index:7;padding:16px}.modal.on{display:grid}.modal .box{width:min(520px,100%);padding:20px;max-height:calc(100vh - 32px);overflow:auto}.modal h2{margin:0 0 6px;font-size:20px}.modal .sub{color:var(--muted);font-size:13.5px;margin:0 0 12px}
+#endWords{display:grid;grid-template-columns:1fr 1fr;gap:6px}#endWords div{border:1px solid var(--line);border-radius:10px;padding:7px 10px;display:flex;flex-direction:column}#endWords b{font-family:var(--ko);font-size:16px}#endWords span{font-size:12.5px;color:var(--muted)}
+.modal .row{display:flex;gap:8px;justify-content:flex-end;margin-top:14px}
 #loading{position:fixed;inset:0;z-index:9;display:grid;place-items:center;background:linear-gradient(#5b86c0,#c9d4dc);font-weight:800;font-size:18px;color:#fff;text-align:center}
 #loading .k{font-family:var(--ko);font-size:44px;display:block;text-shadow:0 4px 18px #0005}
 @media (max-width:760px){#hint{max-width:calc(100vw - 24px);top:auto;bottom:calc(190px + env(safe-area-inset-bottom))}#emotes{top:auto;bottom:calc(200px + env(safe-area-inset-bottom));flex-direction:column}#card{max-width:calc(100vw - 24px)}}
@@ -89,7 +96,7 @@ button{font:inherit;color:inherit;cursor:pointer;border:0;background:none}
     <button data-m="jump" title="Үсрэх (4)">🦘<small>4</small></button>
   </div>
   <div id="hint" class="panel"></div>
-  <div id="quests" class="panel"><h4>Даалгавар <span id="qcount"></span><b id="money"></b><button id="qmin">–</button></h4><div id="qlist"></div></div>
+  <div id="quests" class="panel"><div id="story"><div class="sh">📖 <b>지수의 동생</b> <span id="stStep"></span><span id="stTime"></span></div><div class="so"><span id="stNav"><span id="stArrow">⬆</span><span id="stDist"></span></span><span id="stObj"></span></div></div><h4>Нэмэлт даалгавар <span id="qcount"></span><b id="money"></b><button id="qmin">–</button></h4><div id="qlist"></div></div>
   <button id="snd" class="panel" title="Дуу">🔊</button>
   <div id="prompt" class="panel"><kbd>E</kbd><span id="promptT"></span></div>
   <div id="dlg" class="panel">
@@ -99,6 +106,7 @@ button{font:inherit;color:inherit;cursor:pointer;border:0;background:none}
   <div id="help" class="panel"><span class="pc"><b>WASD</b> алхах · <b>Хулгана/тачпад чирэх</b> эргэж харах · <b>Дугуй</b> ойртох · <b>Space</b> үсрэх · <b>Shift</b> гүйх · <b>1–4</b> хөдөлгөөн</span><span class="mob"><b>Джойстик</b> алхах · <b>Дэлгэц чирэх</b> харах · <b>Хоёр хуруу</b> ойртох</span></div>
   <div id="touch"><div id="joy"><div id="knob"></div></div><button class="tbtn" id="bJump" aria-label="Үсрэх">⤒</button><button class="tbtn" id="bRun" aria-label="Гүйх">ГҮЙХ</button><button class="tbtn" id="bTalk" aria-label="Ярих">💬</button></div>
 </div>
+<div id="endcard" class="modal"><div class="box panel"><h2>🎉 지수의 동생 · Түүх дууслаа!</h2><p class="sub">Хугацаа: <b id="endTime"></b>. Энэ түүхэнд сурсан үгс:</p><div id="endWords"></div><div class="row"><button class="chip" id="endAgain">↺ Дахин тоглох</button><button class="chip" id="endClose" style="background:var(--accent);color:#fff">Үргэлжлүүлэх</button></div></div></div>
 <div id="passed"><div class="t1" id="pT1"></div><div class="t2" id="pT2"></div>
 </div>
 <script src="/vendor/three.min.js"></script>
@@ -514,7 +522,7 @@ const QUESTS = [
       ["다음 케이블카는 십 분 후에 출발해요.", "daeum keibeulkaneun sip bun hue chulbalhaeyo.", "Дараагийн тэрэг 10 минутын дараа хөдөлнө.", [["십 분 전이에요?", "sip bun jeonieyo?", "10 минутын өмнө үү?", 0, "후 = дараа, 전 = өмнө."], ["알겠습니다, 감사합니다!", "algetseumnida, gamsahamnida!", "Ойлголоо, баярлалаа!", 1]]]
     ] }
 ];
-let prog = store.get("namsan-progress", null) || { done: {}, money: 50000, items: [], lock: null }; prog.done ||= {}; prog.items ||= [];
+let prog = store.get("namsan-progress", null) || { done: {}, money: 50000, items: [], lock: null }; prog.done ||= {}; prog.story ||= 0; prog.items ||= [];
 const saveProg = () => store.set("namsan-progress", prog);
 const npcs = [];
 function buildNPCs() {
@@ -544,7 +552,7 @@ function hangLock(x, z, fresh = true) {
 /* ---------- dialog ---------- */
 let D = null, activeQ = null;
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
-function nearNPC() { let best = null, bd = 3.3; for (const n of npcs) if (n.q) { const d = Math.hypot(P.x - n.x, P.z - n.z); if (d < bd) { bd = d; best = n; } } return best; }
+function nearNPC() { const st = typeof STORY !== "undefined" && STORY[prog.story], want = st && ROLE[st.role]; if (want && Math.hypot(P.x - want.x, P.z - want.z) < 3.6) return want; let best = null, bd = 3.3; for (const n of npcs) if (n.q || n.role) { const d = Math.hypot(P.x - n.x, P.z - n.z); if (d < bd) { bd = d; best = n; } } return best; }
 const needsHang = () => prog.done.lock && !prog.lock;
 const atRailing = () => Math.hypot(P.x, P.z) > PLAZA_R - 2.2;
 function interact() {
@@ -552,8 +560,13 @@ function interact() {
   if (needsHang() && atRailing()) { const a = Math.atan2(P.z, P.x); P.ry = Math.atan2(Math.cos(a), Math.sin(a)); hangLock(Math.cos(a) * PLAZA_R, Math.sin(a) * PLAZA_R); return; }
   const n = nearNPC(); if (!n) return; const q = n.q;
   n.ch.rotation.y = Math.atan2(P.x - n.x, P.z - n.z); P.ry = Math.atan2(n.x - P.x, n.z - P.z);
+  const sst = STORY[prog.story]; if (sst && ROLE[sst.role] === n) { storyTalk(n); return; }
+  if (n.role) { storyTalk(n); return; }
   if (prog.done[q.id]) { const l = ["또 오세요! 😊", "안녕하세요! 또 만났네요.", "좋은 하루 보내세요!"][(Math.random() * 3) | 0]; bubble(n.ch, l); speak(l, q.voice); return; }
   if (prog.money < q.cost) { hint("Мөнгө хүрэлцэхгүй байна 😢", 3000); return; }
+  startDialog(q, n);
+}
+function startDialog(q, n) {
   D = { n, q, step: 0, wrong: 0, hint: false };
   camYaw = P.ry + Math.PI + .85; camPitch = .1; camDist = Math.min(camDist, 4.6);
   $("dlg").style.display = "flex"; $("dlg").classList.remove("hint"); showStep();
@@ -575,6 +588,7 @@ function answer(b, c, spoken) {
   } else { b.classList.add("bad"); D.wrong++; sfx.bad(); $("dFb").className = "fb bad"; $("dFb").textContent = "✗ " + (c[4] || "Буруу байна, дахин оролдоорой."); b.querySelector(".cm").style.display = "block"; }
 }
 function finish() {
+  if (D.q.story) { closeDlg(); storyAdvance(); return; }
   const q = D.q, stars = Math.max(1, 3 - D.wrong - (D.hint ? 1 : 0));
   prog.done[q.id] = stars; prog.money -= q.cost; prog.items.push(q.item); saveProg(); closeDlg(); renderQuests(); sfx.win();
   passed("Даалгавар биеллээ!", `${q.item}  ${"★".repeat(stars)}${"☆".repeat(3 - stars)}${q.cost ? "  −₩" + q.cost.toLocaleString() : ""}`);
@@ -584,6 +598,7 @@ function finish() {
 function closeDlg() { $("dlg").style.display = "none"; D = null; if ("speechSynthesis" in window) speechSynthesis.cancel(); stopListen(); }
 let passT; function passed(t1, t2) { $("pT1").textContent = t1; $("pT2").textContent = t2; $("passed").classList.add("on"); clearTimeout(passT); passT = setTimeout(() => $("passed").classList.remove("on"), 3200); }
 function renderQuests() {
+  const st = STORY[prog.story]; $("stObj").innerHTML = st ? st.obj : "✅ Түүх дууссан! Дахин тоглох бол доорх товчийг дар."; $("stStep").textContent = `${Math.min(prog.story, STORY.length)}/${STORY.length}`; $("stNav").hidden = !st;
   if (!activeQ || prog.done[activeQ]) activeQ = (QUESTS.find(q => !prog.done[q.id]) || {}).id || null;
   const n = QUESTS.filter(q => prog.done[q.id]).length; $("qcount").textContent = `${n}/${QUESTS.length}`; $("money").textContent = "₩" + prog.money.toLocaleString();
   $("qlist").innerHTML = QUESTS.map(q => { const d = prog.done[q.id], hang = q.id === "lock" && d && !prog.lock; return `<button class="q${d && !hang ? " done" : ""}${q.id === activeQ || hang ? " on" : ""}" data-id="${q.id}"><span class="ic">${d && !hang ? "✅" : q.ic}</span><span><span class="t">${esc(hang ? "Цоожоо хашлага дээр зүү" : q.task)}</span><br><span style="font-family:var(--ko);font-size:12px;color:var(--muted)">${esc(q.who)}</span>${d ? ` <span class="stars">${"★".repeat(d)}${"☆".repeat(3 - d)}</span>` : ""}</span></button>`; }).join("");
@@ -596,6 +611,111 @@ $("dHint").onclick = () => { if (!D) return; $("dlg").classList.toggle("hint"); 
 $("qmin").onclick = () => { $("quests").classList.toggle("min"); $("qmin").textContent = $("quests").classList.contains("min") ? "+" : "–"; };
 if (innerWidth < 760) { $("quests").classList.add("min"); $("qmin").textContent = "+"; }
 $("bTalk").addEventListener("click", () => interact());
+
+/* ================= STORY: 지수의 동생 (about five minutes) =================
+   Jisu has lost her little brother Minho on the plaza. Ask around, find him by his clothes,
+   buy him a hotteok and walk him back. Each stage is one conversation with one person. */
+const myName = () => buddy.name || "친구";
+const STORY_WORDS = [["동생", "дүү"], ["잃어버렸어요", "алдчихлаа, гээчихлээ"], ["일곱 살", "долоон настай"], ["빨간 모자", "улаан малгай"], ["노란 가방", "шар цүнх"], ["오른쪽 / 왼쪽", "баруун / зүүн"], ["찾고 있어요", "хайж байна"], ["호떡 두 개", "хоёр хотток"], ["뜨거워요", "халуун"], ["선물", "бэлэг"]];
+const STORY = [
+  { role: "jisu", obj: "Санаа зовсон охин 지수-тэй ярь", steps: () => [
+    ["저기요! 도와주세요!", "jeogiyo! dowajuseyo!", "Уучлаарай! Туслаач!", [["무슨 일이에요?", "museun irieyo?", "Юу болсон бэ?", 1], ["안녕히 계세요.", "annyeonghi gyeseyo.", "Баяртай.", 0, "Тусламж гуйж байхад орхиод явчих гэж үү 😢"], ["배고파요.", "baegopayo.", "Өлсөж байна.", 0, "Эхлээд юу болсныг асуугаарай: «무슨 일이에요?»"]]],
+    ["동생을 잃어버렸어요…", "dongsaengeul ireobeoryeosseoyo…", "Дүүгээ алдчихлаа…", [["저도 동생이 있어요.", "jeodo dongsaengi isseoyo.", "Надад ч бас дүү бий.", 0, "Одоо туслах хэрэгтэй. Дүүгийн насыг асуу."], ["동생이 몇 살이에요?", "dongsaengi myeot sarieyo?", "Дүү чинь хэдэн настай вэ?", 1], ["동생이 예뻐요?", "dongsaengi yeppeoyo?", "Дүү чинь хөөрхөн үү?", 0, "Одоо тийм юм асуух цаг биш 😅"]]],
+    ["일곱 살이에요. 이름은 민호예요.", "ilgop sarieyo. ireumeun minhoyeyo.", "Долоон настай. Нэр нь Минхо.", [["일곱 시예요?", "ilgop siyeyo?", "Долоон цаг уу?", 0, "시 = цаг, 살 = нас."], ["민호는 뭘 입었어요?", "minhoneun mwol ibeosseoyo?", "Минхо юу өмссөн бэ?", 1], ["민호가 뭐예요?", "minhoga mwoyeyo?", "Минхо гэж юу вэ?", 0, "Минхо бол хүүгийн нэр."]]],
+    ["빨간 모자를 쓰고 노란 가방을 멨어요.", "ppalgan mojareul sseugo noran gabangeul maesseoyo.", "Улаан малгай өмсөж, шар цүнх үүрсэн.", [["파란 모자요?", "paran mojayo?", "Цэнхэр малгай юу?", 0, "파란 = цэнхэр, 빨간 = улаан."], ["모자가 없어요.", "mojaga eopseoyo.", "Малгай байхгүй.", 0, "Тэр малгайтай гэж хэллээ."], ["알겠어요. 제가 찾아 볼게요!", "algesseoyo. jega chaja bolgeyo!", "Ойлголоо. Би хайгаад үзье!", 1]]]
+  ] },
+  { role: "guard", obj: "Цамхгийн хаалганы 경비원 (харуул)-аас асуу", steps: () => [
+    ["안녕하세요. 무슨 일이세요?", "annyeonghaseyo. museun iriseyo?", "Сайн байна уу. Юу болов?", [["빨간 모자를 쓴 남자아이를 봤어요?", "ppalgan mojareul sseun namjaaireul bwasseoyo?", "Улаан малгайтай хүү харсан уу?", 1], ["화장실 어디예요?", "hwajangsil eodiyeyo?", "Жорлон хаана вэ?", 0, "Одоо Минхог хайж байна шүү дээ."], ["모자 주세요.", "moja juseyo.", "Малгай өгөөч.", 0, "Малгайтай хүүг харсан эсэхийг асуу."]]],
+    ["아, 봤어요! 케이블카 쪽으로 갔어요.", "a, bwasseoyo! keibeulka jjogeuro gasseoyo.", "Аа, харсан! Кабель тэрэг рүү явсан.", [["고마워, 안녕!", "gomawo, annyeong!", "Баярлалаа, бай!", 0, "Энэ бол 반말 (найз нөхдийн хэлбэр). Ахмад хүнтэй «감사합니다» гэж ярина."], ["케이블카가 어느 쪽이에요?", "keibeulkaga eoneu jjogieyo?", "Кабель тэрэг аль талд вэ?", 1], ["케이블카 타고 싶어요.", "keibeulka tago sipeoyo.", "Кабель тэргэнд суумаар байна.", 0, "Эхлээд Минхог олъё."]]],
+    ["저쪽이에요. 오른쪽으로 가세요.", "jeojjogieyo. oreunjjogeuro gaseyo.", "Тэр тал. Баруун тийш яваарай.", [["왼쪽이요?", "oenjjogiyo?", "Зүүн тийш үү?", 0, "왼쪽 = зүүн, 오른쪽 = баруун."], ["감사합니다!", "gamsahamnida!", "Баярлалаа!", 1]]]
+  ] },
+  { role: "cable", obj: "Кабель тэрэгний буудлын ажилтнаас асуу", steps: () => [
+    ["어서 오세요. 케이블카 타세요?", "eoseo oseyo. keibeulka taseyo?", "Тавтай морил. Кабель тэргэнд суух уу?", [["네, 두 장 주세요.", "ne, du jang juseyo.", "Тийм, хоёр тасалбар өгөөч.", 0, "Одоо биш, эхлээд Минхог олъё."], ["아니요, 아이를 찾고 있어요.", "aniyo, aireul chatgo isseoyo.", "Үгүй, хүүхэд хайж байна.", 1], ["아이스크림 주세요.", "aiseukeurim juseyo.", "Зайрмаг өгөөч.", 0, "Энд зайрмаг зардаггүй 😄"]]],
+    ["아, 노란 가방 멘 아이요? 호떡 가게 앞에서 봤어요.", "a, noran gabang men aiyo? hotteok gage apeseo bwasseoyo.", "Аа, шар цүнхтэй хүүхэд үү? Хотток лангууны өмнө харсан.", [["호떡 가게가 어디에 있어요?", "hotteok gagega eodie isseoyo?", "Хотток лангуу хаана байдаг вэ?", 1], ["가방이 비싸요?", "gabangi bissayo?", "Цүнх үнэтэй юү?", 0, "Цүнхний үнэ хамаагүй ээ 😄"], ["호떡이 싫어요.", "hotteogi sireoyo.", "Хотток дургүй.", 0, "Лангууг хаана байгааг асуу."]]],
+    ["바로 저기, 자물쇠 나무 옆에 있어요.", "baro jeogi, jamulsoe namu yeope isseoyo.", "Яг тэнд, цоожны модны хажууд бий.", [["정말 감사합니다!", "jeongmal gamsahamnida!", "Үнэхээр баярлалаа!", 1], ["나무가 커요.", "namuga keoyo.", "Мод том байна.", 0, "Талархлаа илэрхийлээрэй."]]]
+  ] },
+  { role: "minho", obj: "Хотток лангууны орчмоос <b>улаан малгай, шар цүнхтэй</b> Минхог ол", target: "vendor", steps: () => [
+    ["…누구세요?", "…nuguseyo?", "…Хэн бэ?", [["민호 씨, 안녕하십니까?", "minho ssi, annyeonghasimnikka?", "Минхо гуай, мэнд хүргэе.", 0, "7 настай хүүхэдтэй хэт албаар ярьж байна 😄 Хүүхэдтэй 반말 болно."], ["안녕, 민호야! 누나가 찾고 있어.", "annyeong, minhoya! nunaga chatgo isseo.", "Сайн уу, Минхо! Эгч чинь хайж байна.", 1], ["너 누구야?", "neo nuguya?", "Чи хэн бэ?", 0, "Тэр чамаас асуусан шүү дээ 🙂"]]],
+    ["배고파요… 호떡 먹고 싶어요.", "baegopayo… hotteok meokgo sipeoyo.", "Өлсөж байна… хотток идмээр байна.", [["나도 배불러.", "nado baebulleo.", "Би ч бас цадсан.", 0, "배부르다 = цадах. Хүү өлсөж байна."], ["그래, 호떡 사 줄게!", "geurae, hotteok sa julge!", "За, хотток авч өгье!", 1], ["호떡 없어.", "hotteok eopseo.", "Хотток байхгүй.", 0, "Лангуу яг хажууд чинь байна 😉"]]]
+  ] },
+  { role: "vendor", obj: "Хотток лангуунаас <b>2 хотток</b> худалдаж ав", steps: () => [
+    ["어서 오세요! 따끈따끈한 호떡이에요!", "eoseo oseyo! ttakkeunttakkeunhan hotteogieyo!", "Тавтай морил! Халуухан хотток байна!", [["호떡 이 개 주세요.", "hotteok i gae juseyo.", "(буруу тоо)", 0, "개-тэй солонгос тоо хэрэглэнэ: 하나→한, 둘→두. «두 개»."], ["호떡 두 명 주세요.", "hotteok du myeong juseyo.", "(буруу тоолох үг)", 0, "명 = хүн тоолох үг. Юмыг 개-ээр тоолно."], ["호떡 두 개 주세요.", "hotteok du gae juseyo.", "Хоёр хотток өгөөч.", 1]]],
+    ["두 개에 삼천 원이에요.", "du gae-e samcheon wonieyo.", "Хоёр нь 3,000 вон.", [["삼만 원이요?", "samman woniyo?", "30,000 вон уу?", 0, "삼천 = 3,000, 삼만 = 30,000."], ["여기 삼천 원이요.", "yeogi samcheon woniyo.", "Энд 3,000 вон.", 1]]],
+    ["뜨거우니까 조심하세요!", "tteugeounikka josimhaseyo!", "Халуун тул болгоомжтой!", [["차가워요?", "chagawoyo?", "Хүйтэн үү?", 0, "차갑다 = хүйтэн, 뜨겁다 = халуун."], ["네, 감사합니다!", "ne, gamsahamnida!", "Тийм, баярлалаа!", 1]]]
+  ] },
+  { role: "minho", obj: "Минход хоттокоо өг", steps: () => [
+    ["와, 호떡이다! 고마워요!", "wa, hotteogida! gomawoyo!", "Хөөх, хотток! Баярлалаа!", [["빨리 먹어!", "ppalli meogeo!", "Хурдан ид!", 0, "Хүүхдийг яаруулах хэрэггүй 🙂"], ["천천히 먹어. 이제 누나한테 가자!", "cheoncheonhi meogeo. ije nunahante gaja!", "Аажуухан ид. Одоо эгч рүүгээ явъя!", 1]]]
+  ] },
+  { role: "jisu", obj: "Минхог дагуулж 지수 руу буцаж оч", check: () => Math.hypot(MINHO().position.x - ROLE.jisu.x, MINHO().position.z - ROLE.jisu.z) < 7, steps: () => [
+    ["민호야! 정말 감사합니다! 어떻게 찾았어요?", "minhoya! jeongmal gamsahamnida! eotteoke chajasseoyo?", "Минхо! Үнэхээр баярлалаа! Яаж олсон бэ?", [["몰라요.", "mollayo.", "Мэдэхгүй.", 0, "Хэн тусалсныг хэлээрэй."], ["경비원하고 직원이 도와줬어요.", "gyeongbiwonhago jigwoni dowajwosseoyo.", "Харуул, ажилтан хоёр тусалсан.", 1], ["호떡을 먹었어요.", "hotteogeul meogeosseoyo.", "Хотток идсэн.", 0, "Яаж олсноо хэлээрэй 😄"]]],
+    ["이름이 뭐예요?", "ireumi mwoyeyo?", "Таны нэр хэн бэ?", [["몽골이에요.", "monggorieyo.", "Монгол.", 0, "Энэ бол улсын нэр. Өөрийнхөө нэрийг хэл."], [`저는 ${myName()}입니다.`, `jeoneun ${myName()}imnida.`, `Би ${myName()} байна.`, 1], ["이름이 없어요.", "ireumi eopseoyo.", "Нэр байхгүй.", 0, "Нэрээ хэлээрэй 🙂"]]],
+    [`${myName()} 씨, 이건 선물이에요. 남산타워 전망대 표예요!`, `${myName()} ssi, igeon seonmurieyo. namsantawo jeonmangdae pyoyeyo!`, `${myName()}, энэ бэлэг. Намсан цамхгийн тасалбар!`, [["와, 고맙습니다! 잘 쓸게요.", "wa, gomapseumnida! jal sseulgeyo.", "Хөөх, баярлалаа! Сайн ашиглая.", 1], ["표가 비싸요.", "pyoga bissayo.", "Тасалбар үнэтэй.", 0, "Бэлэг шүү дээ 😄 Талархаарай."]]]
+  ] }
+];
+const ROLE = {};
+const MINHO = () => ROLE.minho.ch;
+const KID = (hatColor, bagColor, top, ry) => { const ch = AV.build({ skin: 1, eyes: 4, brows: 0, nose: 1, mouth: 1, cheeks: 1, hair: 1, hairColor: 0, top: 0, topColor: top, bottom: 1, bottomColor: 1, shoes: 0, shoeColor: 0, hat: 1, glasses: 0, back: 1, hand: 0, move: 3, build: 20, height: 10 }, { hatColor, bagColor }); ch.scale.setScalar(.72); ch.rotation.y = ry; return ch; };
+function buildStory() {
+  // hotteok cart next to the love-lock tree
+  const SX = 31, SZ = -37, sa = Math.atan2(-SX, -SZ);
+  box("paint", 3, 1.05, 1.5, SX, 0, SZ, "#2f6fb0", sa); box("metal", 3.1, .1, 1.6, SX, 1.05, SZ, "#c9ccd1", sa); put("paint", new THREE.BoxGeometry(3.6, .14, 2.2), "#e8601c", SX, 2.55, SZ, sa);
+  for (const [dx, dz] of [[-1.4, -.6], [1.4, -.6], [-1.4, .6], [1.4, .6]]) cyl("metal", .045, .045, 1.5, SX + dx * Math.cos(sa) + dz * Math.sin(sa), 1.05, SZ - dx * Math.sin(sa) + dz * Math.cos(sa), "#3a3f46", 6);
+  for (let i = 0; i < 6; i++) put("paint", new THREE.CylinderGeometry(.16, .16, .04, 14), "#c98a3a", SX + (i % 3 - 1) * .45 * Math.cos(sa), 1.13, SZ - (i % 3 - 1) * .45 * Math.sin(sa) + (i < 3 ? -.25 : .25) * Math.cos(sa));
+  const hs = new THREE.Mesh(new THREE.PlaneGeometry(2.6, .65), new THREE.MeshStandardMaterial({ map: signTex("호떡", "Хотток · чихэртэй боов", "#e8601c"), roughness: .6 })); hs.position.set(SX + Math.sin(sa) * .8, 2.05, SZ + Math.cos(sa) * .8); hs.rotation.y = sa; scene.add(hs); ring(1.9, SX, SZ);
+  const add = (role, ch, x, z, ry, who, whoMn, voice, idle) => { ch.position.set(x, 0, z); ch.rotation.y = ry; scene.add(ch); const n = { role, ch, x, z, ry, who, whoMn, voice, idle }; if (role !== "minho") ring(.5, x, z); const tag = labelSprite(who, "#2f6fb0dd"); tag.position.y = ch.userData.height + .25; ch.add(tag); npcs.push(n); ROLE[role] = n; return n; };
+  add("jisu", AV.build({ skin: 0, eyes: 5, brows: 4, nose: 1, mouth: 3, cheeks: 1, hair: 6, hairColor: 0, top: 2, topColor: 2, bottom: 2, bottomColor: 10, shoes: 0, shoeColor: 0, hat: 0, glasses: 0, back: 0, hand: 0, move: 1, build: 20, height: 45 }, { expression: "sad" }), -21, 4, .6, "지수", "Жисү", { pitch: 1.3, rate: .95 }, [["민호야…", "Минхо минь…"]]);
+  add("guard", AV.build({ skin: 2, eyes: 0, brows: 2, nose: 2, mouth: 5, cheeks: 0, hair: 1, hairColor: 0, top: 6, topColor: 10, bottom: 0, bottomColor: 1, shoes: 1, shoeColor: 1, hat: 1, glasses: 0, back: 0, hand: 0, move: 0, build: 60, height: 70 }, { hatColor: "#2d3a5c" }), -6.5, 15.8, 0, "경비원", "харуул", { pitch: .8, rate: .9 }, [["안전하게 관람하세요.", "Аюулгүй үзээрэй."]]);
+  add("vendor", AV.build({ skin: 2, eyes: 3, brows: 1, nose: 3, mouth: 4, cheeks: 1, hair: 3, hairColor: 6, top: 0, topColor: 2, bottom: 0, bottomColor: 1, shoes: 1, shoeColor: 1, hat: 2, glasses: 0, back: 0, hand: 0, move: 1, build: 70, height: 40 }), SX - Math.sin(sa) * 1.3, SZ - Math.cos(sa) * 1.3, sa + Math.PI, "호떡 아저씨", "хотток худалдагч", { pitch: .75, rate: .95 }, [["호떡 맛있어요!", "Хотток амттай шүү!"]]);
+  add("minho", KID("#e2574c", "#f2b33d", 6, 2.4), 26.5, -29, 2.4, "?", "хүү", { pitch: 1.6, rate: 1 }, [["누나 어디 있어요?", "Эгч минь хаана байна?"]]);
+  add("kidA", KID("#e2574c", "#2f9d8f", 4, 1), 19.5, -36.5, 1, "?", "хүүхэд", { pitch: 1.55, rate: 1 }, [["저는 민호가 아니에요! 제 가방은 초록색이에요.", "Би Минхо биш! Миний цүнх ногоон."]]);
+  add("kidB", KID("#3d7de0", "#f2b33d", 1, -2), 22, -27, -2, "?", "хүүхэд", { pitch: 1.5, rate: 1 }, [["저는 지호예요. 제 모자는 파란색이에요!", "Би Жихо. Миний малгай цэнхэр!"]]);
+  for (const k of ["minho", "kidA", "kidB"]) ROLE[k].ch.userData.emote = null;
+  const cab = npcs.find(n => n.q && n.q.id === "cable"); Object.assign(cab, { who: cab.q.who, whoMn: cab.q.whoMn, voice: cab.q.voice, idle: [["케이블카 타세요!", "Кабель тэргэнд суугаарай!"]] }); ROLE.cable = cab;
+  const m = labelSprite("▼", "#ffc93c", "#1b1f2a"); m.scale.set(.9, .9, 1); scene.add(m); storyMark = m;
+  if (prog.story >= 5) { placeMinhoNear(P.x, P.z); }
+  if (prog.story >= STORY.length) { MINHO().position.set(ROLE.jisu.x + 1.2, 0, ROLE.jisu.z + .4); ROLE.jisu.ch.userData = { ...ROLE.jisu.ch.userData }; }
+}
+let storyMark = null;
+function placeMinhoNear(x, z) { MINHO().position.set(x - 1.5, 0, z - 1.5); }
+function storyTarget() { const st = STORY[prog.story]; if (!st) return null; if (prog.story === 6 && !st.check()) return MINHO().position.distanceTo(P.ch.position) > 5 ? MINHO().position : ROLE.jisu.ch.position; return ROLE[st.target || st.role].ch.position; }
+function storyTalk(n) {
+  const st = STORY[prog.story];
+  if (st && ROLE[st.role] === n) {
+    if (st.check && !st.check()) { bubble(n.ch, "민호는요?"); speak("민호는요?", n.voice); hint("💬 <b>민호는요?</b> = Минхо хаана байна? (Минхог дагуулж ир)", 3500); return; }
+    if (prog.story === 0 && !prog.storyStart) { prog.storyStart = Date.now(); saveProg(); }
+    startDialog({ who: n.who === "?" ? "민호" : n.who, whoMn: n.whoMn, voice: n.voice, steps: st.steps(), story: true }, n); return;
+  }
+  const l = n.idle[(Math.random() * n.idle.length) | 0]; bubble(n.ch, l[0]); speak(l[0], n.voice); hint(`💬 <b>${esc(l[0])}</b> = ${esc(l[1])}`, 3800);
+}
+function storyAdvance() {
+  prog.story++; saveProg();
+  if (prog.story === 6) { MINHO().userData.emote = null; ROLE.minho.who = "민호"; }
+  if (prog.story >= STORY.length) { storyEnd(); }
+  else { sfx.ok(); hint("📖 " + STORY[prog.story].obj, 5000); }
+  if (prog.story === 2) ROLE.jisu.ch.userData.emote = null;
+  renderQuests();
+}
+function storyEnd() {
+  const sec = prog.storyStart ? Math.round((Date.now() - prog.storyStart) / 1000) : 0; prog.storyTime = sec; prog.items.push("🎫 전망대 표 (선물)"); saveProg();
+  sfx.win(); MINHO().userData.emote = "jump"; ROLE.jisu.ch.userData.emote = "wave"; P.ch.userData.emote = "dance"; P.emoteT = 5;
+  passed("Түүх дууслаа! 🎉", `지수의 동생 · ${Math.floor(sec / 60)}:${String(sec % 60).padStart(2, "0")}`);
+  setTimeout(() => { $("endWords").innerHTML = STORY_WORDS.map(([k, m]) => `<div><b>${esc(k)}</b><span>${esc(m)}</span></div>`).join(""); $("endTime").textContent = `${Math.floor(sec / 60)} мин ${sec % 60} сек`; $("endcard").classList.add("on"); }, 3400);
+}
+$("endClose").onclick = () => $("endcard").classList.remove("on");
+$("endAgain").onclick = () => { prog.story = 0; prog.storyStart = 0; saveProg(); location.reload(); };
+function updateStory(dt, t) {
+  // Minho follows the player after he gets his hotteok
+  if (prog.story >= 5 && prog.story < STORY.length) {
+    const m = MINHO(), bx = P.x - Math.sin(P.ry) * 1.4 + Math.cos(P.ry) * .9, bz = P.z - Math.cos(P.ry) * 1.4 - Math.sin(P.ry) * .9, dx = bx - m.position.x, dz = bz - m.position.z, d = Math.hypot(dx, dz);
+    let sp = 0; if (d > .3) { sp = Math.min(6, d * 2.2); m.position.x += dx / d * sp * dt; m.position.z += dz / d * sp * dt; let r = Math.atan2(dx, dz) - m.rotation.y; r = Math.atan2(Math.sin(r), Math.cos(r)); m.rotation.y += r * Math.min(1, dt * 8); }
+    AV.animate(m, sp, false, dt, t); ROLE.minho.x = m.position.x; ROLE.minho.z = m.position.z;
+  }
+  const tp = storyTarget();
+  storyMark.visible = !!tp && !D; if (tp) storyMark.position.set(tp.x, (tp === MINHO().position ? 1.9 : 3.2) + Math.sin(t * 3) * .12, tp.z);
+  // on-screen arrow and distance toward the current objective
+  if (tp) { const vx = tp.x - P.x, vz = tp.z - P.z, f = -Math.sin(camYaw) * vx - Math.cos(camYaw) * vz, r = Math.cos(camYaw) * vx - Math.sin(camYaw) * vz; $("stArrow").style.transform = `rotate(${Math.atan2(r, f)}rad)`; $("stDist").textContent = Math.round(Math.hypot(vx, vz)) + "м"; }
+  if (prog.storyStart && prog.story < STORY.length) { const s = Math.round((Date.now() - prog.storyStart) / 1000); $("stTime").textContent = `⏱ ${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`; }
+}
 
 /* ================= AUDIO ================= */
 // Korean voices for people (speech synthesis) + answering out loud (speech recognition) + ambience made with WebAudio.
@@ -721,10 +841,11 @@ function tick() {
   sky.position.copy(camera.position);
   sun.position.set(P.x + SUN_DIR.x * 250, SUN_DIR.y * 250, P.z + SUN_DIR.z * 250); sun.target.position.set(P.x, 0, P.z);
   updateTourists(dt, t);
-  for (const n of npcs) { if (n.mark) n.mark.position.y = n.ch.userData.height + .95 + Math.sin(t * 3) * .1; AV.animate(n.ch, 0, false, dt, t); }
+  updateStory(dt, t);
+  for (const n of npcs) { if (n.role === "minho" && prog.story >= 5 && prog.story < STORY.length) continue; if (n.mark) n.mark.position.y = n.ch.userData.height + .95 + Math.sin(t * 3) * .1; AV.animate(n.ch, 0, false, dt, t); }
   { const n = !D ? nearNPC() : null, hang = !D && needsHang() && atRailing(), show = n || hang;
     $("prompt").style.display = show && !isTouch ? "flex" : "none"; $("bTalk").style.display = show ? "grid" : "none";
-    if (show) $("promptT").innerHTML = hang ? "Цоожоо зүүх 🔒" : `<span style="font-family:var(--ko)">${esc(n.q.who)}</span>-тэй ярих${prog.done[n.q.id] ? " ✓" : ""}`; }
+    if (show) $("promptT").innerHTML = hang ? "Цоожоо зүүх 🔒" : `<span style="font-family:var(--ko)">${esc(n.q ? n.q.who : n.who === "?" ? "아이" : n.who)}</span>-тэй ярих${n.q && prog.done[n.q.id] ? " ✓" : ""}`; }
   for (const c of cabins) { c.f += c.dir * dt * .012; if (c.f > .97 || c.f < .03) { c.dir *= -1; c.f = Math.max(.03, Math.min(.97, c.f)); } const p = cablePoint(c.f, c.off); c.g.position.set(p.x, p.y - 3.2, p.z); c.g.rotation.y = Math.atan2(CABLE.x1 - CABLE.x0, CABLE.z1 - CABLE.z0) + Math.PI / 2; }
   windUniform.value = t;
   for (const ch of [P.ch, ...tourists.map(p => p.ch)]) if (ch.userData.bub && (ch.userData.bubT -= dt) <= 0) { ch.remove(ch.userData.bub); ch.userData.bub = null; }
@@ -743,8 +864,9 @@ function tick() {
   bucket("concrete", new THREE.MeshStandardMaterial({ vertexColors: true, ...material("concrete") })); bucket("glass", new THREE.MeshStandardMaterial({ vertexColors: true, ...material("glass") }));
   bucket("granite", new THREE.MeshStandardMaterial({ vertexColors: true, ...material("granite") }), false, true); bucket("wood", new THREE.MeshStandardMaterial({ vertexColors: true, ...material("wood") }), false, true);
   bucket("glow", new THREE.MeshBasicMaterial({ vertexColors: true, toneMapped: false }), false, false);
-  buildTerrain(); buildTower(); buildPlaza(); buildForest(); buildCity(); flush(); buildNPCs(); flush(); buildTourists(); setPlayer(); renderQuests(); setSound(soundOn);
+  buildTerrain(); buildTower(); buildPlaza(); buildForest(); buildCity(); flush(); buildNPCs(); buildStory(); flush(); buildTourists(); setPlayer(); renderQuests(); setSound(soundOn);
   $("loading").remove(); $("hud").hidden = false; setTimeout(() => $("help").style.opacity = 0, 14000);
+  if (prog.story < STORY.length) setTimeout(() => hint("📖 " + STORY[prog.story].obj, 6000), demo ? 800 : 4300);
   if (!demo) hint(`<b>환영합니다${buddy.name ? ", " + buddy.name : ""}!</b> Таны TriBee дүр Намсанд ирлээ 🎉`, 4000);
   tick();
 })();
