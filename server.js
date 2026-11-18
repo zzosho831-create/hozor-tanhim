@@ -9,11 +9,13 @@ const { WebSocketServer } = require("ws");
 const PORT = process.env.PORT || 3000;
 const INDEX = fs.readFileSync(path.join(__dirname, "public", "index.html"));
 const SEOUL = fs.readFileSync(path.join(__dirname, "public", "seoul.html"));
+const THREE_JS = fs.readFileSync(path.join(path.dirname(require.resolve("three")), "three.min.js"));
 const TURN_MS = 30000, BB = 20, SB = 10, TL_PAY = 10;
 const G = { bj: { min: 1, max: 7, minBal: 10 }, tl: { min: 2, max: 4, minBal: 10 }, pk: { min: 2, max: 8, minBal: 20 } };
 
 const server = http.createServer((req, res) => {
   if (req.url === "/health") { res.end("ok"); return; }
+  if (req.url.split("?")[0] === "/vendor/three.min.js") { res.writeHead(200, { "content-type": "application/javascript; charset=utf-8", "cache-control": "public, max-age=604800" }); res.end(THREE_JS); return; }
   const isSeoul = req.url.split("?")[0].replace(/\/$/, "") === "/seoul";
   res.writeHead(200, { "content-type": "text/html; charset=utf-8", "cache-control": "no-cache" });
   res.end(isSeoul ? SEOUL : INDEX);
@@ -320,11 +322,13 @@ setInterval(() => { for (const ws of clients.keys()) if (ws.readyState === 1) ws
 /* ---------------- Seoul 3D world (positions + chat only) ---------------- */
 const walkers = new Map(); // ws -> {id,n,look,p:[x,y,z,r,a]}
 let walkerSeq = 0;
-const LOOK_KEYS = { skin: 1, hair: 1, shirt: 1, pants: 1, shoes: 1 }, STYLES = ["short", "long", "cap", "bun", "none"];
+const LOOK_COLORS = ["skin", "hair", "top", "bottom", "shoes"];
+const LOOK_ENUMS = { body: ["m", "f"], hairStyle: ["side", "short", "buzz", "long", "bob", "bun", "perm", "cap"], topType: ["tee", "hoodie", "padding", "shirt", "suit", "uniform", "hanbok"], bottomType: ["jeans", "slacks", "skirt", "shorts", "longskirt"] };
 function cleanLook(l) {
-  const o = { style: "short", face: 0 }; if (!l || typeof l !== "object") return o;
-  for (const k in LOOK_KEYS) if (/^#[0-9a-f]{6}$/i.test(l[k])) o[k] = l[k];
-  if (STYLES.includes(l.style)) o.style = l.style; o.face = Math.min(3, Math.max(0, l.face | 0)); return o;
+  const o = {}; if (!l || typeof l !== "object") return o;
+  for (const k of LOOK_COLORS) if (/^#[0-9a-f]{6}$/i.test(l[k])) o[k] = l[k];
+  for (const k in LOOK_ENUMS) if (LOOK_ENUMS[k].includes(l[k])) o[k] = l[k];
+  o.face = Math.min(3, Math.max(0, l.face | 0)); o.bag = l.bag ? 1 : 0; return o;
 }
 const wsend = (ws, m) => { if (ws.readyState === 1) ws.send(typeof m === "string" ? m : JSON.stringify(m)); };
 seoulWss.on("connection", ws => {
