@@ -1,0 +1,958 @@
+<!doctype html>
+<html lang="mn">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<title>Сөүл 3D</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@500;800&family=Manrope:wght@500;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#1b1f2a; --paper:#ffffffee; --paper-s:#fff; --muted:#5d6475; --line:#1b1f2a1f;
+  --accent:#ff5a5f; --accent-d:#d93d43; --blue:#2f6bff; --gold:#ffb627; --ok:#22a861; --bad:#e5484d;
+  --shadow:0 10px 30px #0b12204d; --ui:"Manrope",system-ui,sans-serif; --ko:"Noto Sans KR","Apple SD Gothic Neo","Malgun Gothic",sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--ink:#eef1f7;--paper:#161b26ee;--paper-s:#1d2330;--muted:#a2aabb;--line:#ffffff22}}
+:root[data-theme="dark"]{--ink:#eef1f7;--paper:#161b26ee;--paper-s:#1d2330;--muted:#a2aabb;--line:#ffffff22}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;overflow:hidden;background:#9fd3ff;font-family:var(--ui);color:var(--ink);touch-action:none;user-select:none;-webkit-user-select:none}
+canvas#c{position:fixed;inset:0;width:100%;height:100%;display:block;outline:none}
+button{font:inherit;color:inherit;cursor:pointer;border:0;background:none}
+.ko{font-family:var(--ko)}
+.panel{background:var(--paper);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-radius:16px;box-shadow:var(--shadow);border:1px solid var(--line)}
+#hud{position:fixed;inset:0;pointer-events:none}
+#hud>*{pointer-events:auto}
+#top{position:absolute;left:max(12px,env(safe-area-inset-left));top:max(12px,env(safe-area-inset-top));display:flex;flex-direction:column;gap:8px;width:min(270px,calc(100vw - 190px))}
+#me{display:flex;align-items:center;gap:10px;padding:8px 12px}
+#me .av{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;font-weight:800;color:#fff;background:var(--accent);flex:none}
+#me .nm{font-weight:800;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#me .st{font-size:12px;color:var(--muted);display:flex;gap:10px}
+#quests{padding:10px 12px}
+#quests h4{margin:0 0 6px;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);display:flex;justify-content:space-between;align-items:center}
+#quests h4 button{font-size:16px;line-height:1;padding:0 4px}
+.q{display:flex;gap:8px;align-items:flex-start;padding:6px 6px;border-radius:10px;font-size:13px;line-height:1.3;width:100%;text-align:left}
+.q:hover{background:#7f7f7f18}
+.q.on{background:#ff5a5f1f;outline:1.5px solid var(--accent)}
+.q .ic{flex:none;width:22px;text-align:center}
+.q.done{color:var(--muted)}
+.q.done .t{text-decoration:line-through}
+.q .stars{color:var(--gold);font-size:11px}
+#quests.min .q:not(.on){display:none}
+#mapwrap{position:absolute;right:max(12px,env(safe-area-inset-right));top:max(12px,env(safe-area-inset-top));padding:6px;border-radius:50%}
+#mini{width:150px;height:150px;border-radius:50%;display:block}
+#tools{position:absolute;right:max(12px,env(safe-area-inset-right));top:calc(max(12px,env(safe-area-inset-top)) + 176px);display:flex;flex-direction:column;gap:8px}
+.tb{width:44px;height:44px;border-radius:14px;display:grid;place-items:center;font-size:20px}
+#prompt{position:absolute;left:50%;bottom:calc(28px + env(safe-area-inset-bottom));transform:translateX(-50%);padding:10px 16px;font-weight:700;font-size:14px;display:none;align-items:center;gap:10px;white-space:nowrap}
+#prompt kbd{background:var(--ink);color:var(--paper-s);border-radius:6px;padding:2px 8px;font-family:var(--ui)}
+#signhint{position:absolute;left:50%;top:max(12px,env(safe-area-inset-top));transform:translateX(-50%);padding:8px 14px;font-size:14px;display:none;white-space:nowrap}
+#signhint b{font-family:var(--ko);font-size:17px}
+#help{position:absolute;left:50%;bottom:calc(84px + env(safe-area-inset-bottom));transform:translateX(-50%);padding:10px 14px;font-size:12.5px;color:var(--muted);text-align:center;max-width:calc(100vw - 32px);transition:opacity .6s}
+#help b{color:var(--ink)}
+/* touch controls */
+#touch{display:none}
+.touch #touch{display:block}
+.touch #help .pc{display:none}
+#help .mob{display:none}
+.touch #help .mob{display:inline}
+#joy{position:absolute;left:calc(22px + env(safe-area-inset-left));bottom:calc(22px + env(safe-area-inset-bottom));width:130px;height:130px;border-radius:50%;background:#1b1f2a40;border:2px solid #ffffffb0;backdrop-filter:blur(4px)}
+#knob{position:absolute;left:50%;top:50%;width:56px;height:56px;margin:-28px 0 0 -28px;border-radius:50%;background:#fffffff0;box-shadow:0 4px 14px #0004}
+.tbtn{position:absolute;width:68px;height:68px;border-radius:50%;background:#ffffffd9;box-shadow:0 6px 18px #0003;font-size:26px;display:grid;place-items:center;font-weight:800;color:#1b1f2a}
+#bJump{right:calc(22px + env(safe-area-inset-right));bottom:calc(30px + env(safe-area-inset-bottom))}
+#bTalk{right:calc(104px + env(safe-area-inset-right));bottom:calc(30px + env(safe-area-inset-bottom));background:var(--accent);color:#fff;display:none}
+#bRun{right:calc(30px + env(safe-area-inset-right));bottom:calc(112px + env(safe-area-inset-bottom));width:54px;height:54px;font-size:13px}
+#bRun.on{background:var(--gold)}
+.touch #prompt{bottom:calc(178px + env(safe-area-inset-bottom))}
+.touch #help{bottom:calc(176px + env(safe-area-inset-bottom))}
+/* dialog */
+#dlg{position:absolute;left:50%;bottom:calc(16px + env(safe-area-inset-bottom));transform:translateX(-50%);width:min(640px,calc(100vw - 24px));padding:16px;display:none;flex-direction:column;gap:10px;max-height:calc(100vh - 40px);overflow:auto}
+#dlg .who{display:flex;align-items:center;gap:10px}
+#dlg .who .badge{background:var(--accent);color:#fff;font-weight:800;border-radius:10px;padding:4px 10px;font-size:13px}
+#dlg .who .sp{margin-left:auto;display:flex;gap:6px}
+.chip{border:1px solid var(--line);border-radius:999px;padding:5px 11px;font-size:12.5px;font-weight:700;background:var(--paper-s)}
+#dlg .line{font-family:var(--ko);font-size:24px;font-weight:800;line-height:1.35}
+#dlg .rom{font-size:13px;color:var(--muted);font-style:italic;margin-top:-6px}
+#dlg .mn{font-size:14px;color:var(--blue);font-weight:700;display:none}
+#dlg.hint .mn,#dlg.hint .ch .cm{display:block}
+#dlg .chs{display:grid;gap:8px}
+.ch{text-align:left;background:var(--paper-s);border:1.5px solid var(--line);border-radius:12px;padding:10px 12px;transition:transform .08s,border-color .15s}
+.ch:hover{border-color:var(--blue)}
+.ch:active{transform:scale(.98)}
+.ch .ck{font-family:var(--ko);font-size:18px;font-weight:800}
+.ch .cr{font-size:12px;color:var(--muted);font-style:italic}
+.ch .cm{font-size:12.5px;color:var(--blue);font-weight:700;display:none}
+.ch.bad{border-color:var(--bad);background:#e5484d14;animation:shake .3s}
+.ch.good{border-color:var(--ok);background:#22a86118}
+@keyframes shake{25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+#dlg .fb{font-size:13.5px;font-weight:700;border-radius:10px;padding:8px 10px;display:none}
+#dlg .fb.bad{display:block;background:#e5484d18;color:var(--bad)}
+#dlg .fb.good{display:block;background:#22a86118;color:var(--ok)}
+/* modals */
+.modal{position:fixed;inset:0;display:none;place-items:center;background:#0b122066;z-index:5;padding:16px}
+.modal.on{display:grid}
+.modal .box{width:min(560px,100%);max-height:calc(100vh - 32px);overflow:auto;padding:20px}
+.modal h2{margin:0 0 4px;font-size:22px}
+.modal .sub{color:var(--muted);font-size:13.5px;margin:0 0 14px}
+.x{float:right;font-size:22px;line-height:1;padding:2px 6px}
+.wl{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
+.wc{border:1px solid var(--line);border-radius:12px;padding:10px;background:var(--paper-s);text-align:left}
+.wc .k{font-family:var(--ko);font-weight:800;font-size:20px}
+.wc .r{font-size:12px;color:var(--muted);font-style:italic}
+.wc .m{font-size:13px;font-weight:700;color:var(--blue)}
+.wc.lock{opacity:.45}
+.wc.lock .k{filter:blur(5px)}
+/* creator */
+#creator{position:fixed;inset:0;z-index:6;display:none;pointer-events:none}
+#creator.on{display:block}
+#creator .box{pointer-events:auto;position:absolute;left:max(16px,env(safe-area-inset-left));top:50%;transform:translateY(-50%);width:min(360px,calc(100vw - 32px));max-height:calc(100vh - 32px);overflow:auto;padding:18px}
+#creator h1{margin:0;font-size:24px;line-height:1.15}
+#creator h1 span{font-family:var(--ko);color:var(--accent)}
+#creator .sub{color:var(--muted);font-size:13.5px;margin:6px 0 14px}
+#creator label{display:block;font-size:12px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:12px 0 6px}
+#creator input{width:100%;font:inherit;font-size:16px;padding:11px 12px;border-radius:12px;border:1.5px solid var(--line);background:var(--paper-s);color:var(--ink);outline:none}
+#creator input:focus{border-color:var(--accent)}
+.sw{display:flex;flex-wrap:wrap;gap:7px}
+.sw button{width:30px;height:30px;border-radius:9px;border:2px solid #0002;box-shadow:inset 0 0 0 2px #fff6}
+.sw button.on{outline:3px solid var(--accent);outline-offset:2px}
+.opts{display:flex;flex-wrap:wrap;gap:6px}
+.opts button{border:1.5px solid var(--line);border-radius:10px;padding:7px 11px;font-size:13px;font-weight:700;background:var(--paper-s)}
+.opts button.on{border-color:var(--accent);background:#ff5a5f1a}
+.go{margin-top:18px;width:100%;background:var(--accent);color:#fff;font-weight:800;font-size:16px;padding:14px;border-radius:14px;box-shadow:0 6px 16px #ff5a5f55}
+.go:active{transform:translateY(1px)}
+#creator .rnd{margin-top:8px;width:100%;padding:10px;border-radius:12px;border:1.5px dashed var(--line);font-weight:700;font-size:13px}
+@media (max-width:700px){#creator .box{top:auto;bottom:max(12px,env(safe-area-inset-bottom));transform:none;max-height:58vh}}
+#toast{position:fixed;left:50%;top:22%;transform:translate(-50%,-10px);padding:12px 18px;font-weight:800;font-size:15px;opacity:0;transition:opacity .25s,transform .25s;z-index:8;pointer-events:none;text-align:center;max-width:calc(100vw - 32px)}
+#toast.on{opacity:1;transform:translate(-50%,0)}
+#toast .big{font-family:var(--ko);font-size:28px;display:block}
+#chatbar{position:absolute;left:50%;bottom:calc(84px + env(safe-area-inset-bottom));transform:translateX(-50%);width:min(420px,calc(100vw - 24px));display:none;padding:6px;gap:6px}
+#chatbar input{flex:1;font:inherit;font-size:16px;border:0;outline:none;background:transparent;color:var(--ink);padding:8px 10px}
+#chatbar button{background:var(--blue);color:#fff;font-weight:800;border-radius:10px;padding:0 14px}
+#loading{position:fixed;inset:0;z-index:9;display:grid;place-items:center;background:linear-gradient(#7cc4ff,#ffd9e8);font-weight:800;font-size:18px;color:#1b1f2a}
+#loading .ko{font-size:42px;display:block;text-align:center}
+#net{font-size:11px}
+@media (max-width:520px){#toast .big{font-size:21px}#toast{font-size:13px;top:30%}#quests .q{font-size:12px}#mini{width:112px;height:112px}#tools{top:calc(max(12px,env(safe-area-inset-top)) + 138px)}#top{width:calc(100vw - 150px)}#dlg .line{font-size:20px}}
+</style>
+</head>
+<body>
+<canvas id="c" tabindex="0"></canvas>
+<div id="loading"><div><span class="ko">서울</span>Сөүл хот ачаалж байна…</div></div>
+
+<div id="hud" hidden>
+  <div id="top">
+    <div id="me" class="panel"><div class="av" id="meAv">?</div><div style="min-width:0"><div class="nm" id="meName"></div><div class="st"><span>💰 <b id="money">0</b>원</span><span>⭐ <b id="stars">0</b></span><span id="net" title="Онлайн тоглогчид">👥 1</span></div></div></div>
+    <div id="quests" class="panel"><h4>Даалгавар <span id="qcount"></span><button id="qmin" title="Багасгах">–</button></h4><div id="qlist"></div></div>
+  </div>
+  <div id="mapwrap" class="panel"><canvas id="mini" width="300" height="300"></canvas></div>
+  <div id="tools">
+    <button class="tb panel" id="tWords" title="Үгийн сан">📖</button>
+    <button class="tb panel" id="tBag" title="Цүнх">🎒</button>
+    <button class="tb panel" id="tChat" title="Чат (Enter)">💬</button>
+    <button class="tb panel" id="tChar" title="Дүрээ өөрчлөх">👤</button>
+  </div>
+  <div id="signhint" class="panel"></div>
+  <div id="help" class="panel"><span class="pc"><b>WASD</b> хөдлөх · <b>Хулгана/тачпад чирэх</b> харах · <b>Space</b> үсрэх · <b>Shift</b> гүйх · <b>E</b> ярих · <b>Enter</b> чат</span><span class="mob"><b>Зүүн джойстик</b> хөдлөх · <b>Дэлгэц чирэх</b> харах · <b>⤒</b> үсрэх</span></div>
+  <div id="prompt" class="panel"><kbd>E</kbd><span id="promptT"></span></div>
+  <div id="chatbar" class="panel"><input id="chatIn" maxlength="80" placeholder="Солонгосоор бичээд үз: 안녕하세요!" autocomplete="off"><button id="chatGo">Илгээх</button></div>
+  <div id="dlg" class="panel">
+    <div class="who"><span class="badge" id="dWho"></span><span id="dStep" style="font-size:12px;color:var(--muted)"></span><span class="sp"><button class="chip" id="dSay">🔊 Сонсох</button><button class="chip" id="dHint">💡 Орчуулга</button><button class="chip" id="dX">✕</button></span></div>
+    <div class="line" id="dLine"></div>
+    <div class="rom" id="dRom"></div>
+    <div class="mn" id="dMn"></div>
+    <div class="chs" id="dChs"></div>
+    <div class="fb" id="dFb"></div>
+  </div>
+  <div id="touch">
+    <div id="joy"><div id="knob"></div></div>
+    <button class="tbtn" id="bJump" aria-label="Үсрэх">⤒</button>
+    <button class="tbtn" id="bTalk" aria-label="Ярих">💬</button>
+    <button class="tbtn" id="bRun" aria-label="Гүйх">ГҮЙХ</button>
+  </div>
+</div>
+
+<div id="creator"><div class="box panel">
+  <h1>Сөүл 3D <span>서울</span></h1>
+  <p class="sub">Дүрээ бүтээгээд Сөүлээр аял. Дэлгүүр, кафе, метроны даалгаврыг <b>солонгос хэлээр</b> биелүүлнэ.</p>
+  <label for="nmIn">Нэр</label><input id="nmIn" maxlength="16" placeholder="Жишээ: Тэмүүжин" autocomplete="off">
+  <label>Арьс</label><div class="sw" data-k="skin"></div>
+  <label>Үс</label><div class="sw" data-k="hair"></div>
+  <label>Үсний загвар</label><div class="opts" data-k="style"></div>
+  <label>Царай</label><div class="opts" data-k="face"></div>
+  <label>Цамц</label><div class="sw" data-k="shirt"></div>
+  <label>Өмд</label><div class="sw" data-k="pants"></div>
+  <label>Гутал</label><div class="sw" data-k="shoes"></div>
+  <button class="rnd" id="rnd">🎲 Санамсаргүй</button>
+  <button class="go" id="go">Сөүл рүү явах →</button>
+</div></div>
+
+<div class="modal" id="mWords"><div class="box panel"><button class="x" data-close>✕</button><h2>📖 Үгийн сан</h2><p class="sub">Хотоор тархсан <b>үгийн карт</b>-ыг цуглуул. Хаягийн самбар дээр очиход үг нь бас энд нэмэгдэнэ. Карт дээр дарвал дуудлагыг сонсоно.</p><div class="wl" id="wordList"></div></div></div>
+<div class="modal" id="mBag"><div class="box panel"><button class="x" data-close>✕</button><h2>🎒 Цүнх</h2><p class="sub">Даалгавраар худалдаж авсан зүйлс.</p><div class="wl" id="bagList"></div><button class="rnd" id="reset" style="margin-top:16px;color:var(--bad)">Явцаа эхнээс нь эхлүүлэх</button></div></div>
+<div id="toast" class="panel"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+"use strict";
+const $ = id => document.getElementById(id);
+const store = {
+  get(k, d) { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch { return d; } },
+  set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} }
+};
+const isTouch = matchMedia("(pointer:coarse)").matches || "ontouchstart" in window;
+if (isTouch) document.documentElement.classList.add("touch");
+const smallScreen = innerWidth < 700 || innerHeight < 560;
+
+/* ================= DATA ================= */
+const PAL = {
+  skin: ["#ffe0c4", "#f5c9a0", "#e0a878", "#c68a5a", "#8d5a3b", "#5c3a26"],
+  hair: ["#1c1a1a", "#4a2e1c", "#8a5a2b", "#e3b34c", "#d94f4f", "#f3a6c8", "#5d7cff", "#f0f0f0"],
+  shirt: ["#ff5a5f", "#ff9f1c", "#ffd23f", "#2ec4b6", "#2f6bff", "#7b5cff", "#1b1f2a", "#ffffff", "#3bb273", "#ff7eb6"],
+  pants: ["#24324d", "#3a3a3a", "#6b4f3a", "#4b6cb7", "#c9c2b3", "#1d6b52", "#8c2f39", "#111111"],
+  shoes: ["#ffffff", "#111111", "#ff5a5f", "#2f6bff", "#ffd23f", "#7a4b2a"]
+};
+const STYLES = [["short", "Богино"], ["long", "Урт"], ["bun", "Боодол"], ["cap", "Малгай"], ["none", "Халзан"]];
+const FACES = [["0", "😊 Инээмсэглэл"], ["1", "😎 Шил"], ["2", "^^ Хөөрхөн"], ["3", "😮 Гайхсан"]];
+const pick = a => a[Math.floor(Math.random() * a.length)];
+const randLook = () => ({ skin: pick(PAL.skin), hair: pick(PAL.hair), shirt: pick(PAL.shirt), pants: pick(PAL.pants), shoes: pick(PAL.shoes), style: pick(STYLES)[0], face: Math.floor(Math.random() * 4) });
+
+// Missions: Korean dialogue with romanization + Mongolian. Each step: NPC line → pick the right reply.
+const MISSIONS = [
+  { id: "cvs", ic: "🏪", place: "편의점", placeMn: "Дэлгүүр (24 цаг)", npc: "점원 (худалдагч)", task: "Дэлгүүрээс сүү (우유) ав", item: ["🥛", "우유", "сүү"], cost: 2000,
+    steps: [
+      ["어서 오세요!", "eoseo oseyo!", "Тавтай морил!", [["안녕하세요!", "annyeonghaseyo!", "Сайн байна уу!", 1], ["안녕히 가세요.", "annyeonghi gaseyo.", "Баяртай (явж буй хүнд)", 0, "Энэ нь явж буй хүнд хэлдэг баяртай. Орж ирэхдээ «안녕하세요» гэнэ."], ["잘 먹겠습니다.", "jal meokgesseumnida.", "Сайхан идье (хоолны өмнө)", 0, "Энийг хоол идэхийн өмнө хэлдэг."]]],
+      ["뭐 찾으세요?", "mwo chajeuseyo?", "Юу хайж байна вэ?", [["사과 있어요?", "sagwa isseoyo?", "Алим байна уу?", 0, "사과 = алим. Даалгавар бол сүү (우유)."], ["우유 있어요?", "uyu isseoyo?", "Сүү байна уу?", 1], ["화장실 어디예요?", "hwajangsil eodiyeyo?", "Бие засах газар хаана вэ?", 0, "Энэ нь «жорлон хаана вэ» гэсэн үг."]]],
+      ["네, 여기 있어요. 이천 원이에요.", "ne, yeogi isseoyo. icheon wonieyo.", "Тийм, энд байна. 2,000 вон.", [["비싸요!", "bissayo!", "Үнэтэй юм!", 0, "2,000 вон үнэтэй биш ээ 🙂 Мөнгөө өгөхдөө «여기 있어요» гэнэ."], ["여기 있어요.", "yeogi isseoyo.", "Энд байна (өгөхдөө)", 1], ["몰라요.", "mollayo.", "Мэдэхгүй.", 0, "몰라요 = мэдэхгүй."]]],
+      ["감사합니다. 안녕히 가세요!", "gamsahamnida. annyeonghi gaseyo!", "Баярлалаа. Сайн яваарай!", [["안녕히 가세요!", "annyeonghi gaseyo!", "Сайн яваарай!", 0, "Явж байгаа нь та. Үлдэж буй хүнд «안녕히 계세요» (сайн сууж байгаарай) гэнэ."], ["감사합니다. 안녕히 계세요!", "gamsahamnida. annyeonghi gyeseyo!", "Баярлалаа. Сайн сууж байгаарай!", 1]]]
+    ] },
+  { id: "fruit", ic: "🍎", place: "과일 가게", placeMn: "Жимсний дэлгүүр", npc: "아주머니 (эгч)", task: "Жимсний дэлгүүрээс 3 алим (사과 세 개) ав", item: ["🍎", "사과 세 개", "3 алим"], cost: 3000,
+    steps: [
+      ["어서 오세요! 사과가 정말 맛있어요.", "eoseo oseyo! sagwaga jeongmal masisseoyo.", "Тавтай морил! Алим үнэхээр амттай шүү.", [["배고파요.", "baegopayo.", "Өлсөж байна.", 0, "배고파요 = өлсөж байна. Үнийг нь асуугаарай."], ["사과 얼마예요?", "sagwa eolmayeyo?", "Алим хэд вэ?", 1], ["포도 싫어요.", "podo sireoyo.", "Усан үзэмд дургүй.", 0, "포도 = усан үзэм."]]],
+      ["한 개에 천 원이에요.", "han gae-e cheon wonieyo.", "Нэг нь 1,000 вон.", [["삼 개 주세요.", "sam gae juseyo.", "(буруу тоо)", 0, "개-тэй тоолохдоо солонгос тоо хэрэглэнэ: 하나→한, 둘→두, 셋→세. Тэгэхээр «세 개»."], ["세 시예요.", "se siyeyo.", "Гурван цаг болж байна.", 0, "시 = цаг. Ширхэг бол 개."], ["세 개 주세요.", "se gae juseyo.", "Гурвыг өгөөч.", 1]]],
+      ["삼천 원입니다.", "samcheon wonimnida.", "3,000 вон болно.", [["카드 돼요?", "kadeu dwaeyo?", "Картаар болох уу?", 1], ["맛있게 드세요.", "masitge deuseyo.", "Сайхан идээрэй.", 0, "Энийг худалдагч л хэлдэг 🙂"], ["물 주세요.", "mul juseyo.", "Ус өгөөч.", 0, "물 = ус."]]],
+      ["네, 돼요! 맛있게 드세요.", "ne, dwaeyo! masitge deuseyo.", "Тийм, болно! Сайхан идээрэй.", [["미안합니다.", "mianhamnida.", "Уучлаарай.", 0, "Уучлалт гуйх шаардлагагүй. Талархлаа илэрхийл."], ["감사합니다!", "gamsahamnida!", "Баярлалаа!", 1]]]
+    ] },
+  { id: "cafe", ic: "☕", place: "카페", placeMn: "Кофе шоп", npc: "바리스타", task: "Кафед мөстэй американо захиал", item: ["☕", "아이스 아메리카노", "мөстэй американо"], cost: 4500,
+    steps: [
+      ["주문하시겠어요?", "jumunhasigesseoyo?", "Захиалах уу?", [["커피를 싫어해요.", "keopireul sireohaeyo.", "Кофенд дургүй.", 0, "싫어해요 = дургүй. Харин захиалъя!"], ["아이스 아메리카노 한 잔 주세요.", "aiseu amerikano han jan juseyo.", "Нэг мөстэй американо өгөөч.", 1], ["아메리카노 한 개 마셔요.", "amerikano han gae masyeoyo.", "(буруу хэлбэр)", 0, "Ундааг 잔 (аяга)-аар тоолдог: «한 잔 주세요»."]]],
+      ["사이즈는요?", "saijeuneunyo?", "Хэмжээ нь?", [["큰 거 주세요.", "keun geo juseyo.", "Томыг нь өгөөч.", 1], ["작아요.", "jagayo.", "Жижиг байна.", 0, "작아요 = (энэ) жижиг байна гэсэн тайлбар. Сонголтоо «… 거 주세요» гэж хэл."], ["추워요.", "chuwoyo.", "Даарч байна.", 0, "추워요 = хүйтэн / даарч байна."]]],
+      ["드시고 가세요? 가지고 가세요?", "deusigo gaseyo? gajigo gaseyo?", "Энд уух уу? Авч явах уу?", [["네.", "ne.", "Тийм.", 0, "Хоёр сонголттой асуултад «тийм» гэж хариулж болохгүй 🙂"], ["가지고 갈게요.", "gajigo galgeyo.", "Авч явна.", 1], ["먹고 싶어요.", "meokgo sipeoyo.", "Идмээр байна.", 0, "먹고 싶어요 = идмээр байна."]]],
+      ["사천오백 원입니다.", "sacheon-obaek wonimnida.", "4,500 вон.", [["여기 있어요.", "yeogi isseoyo.", "Энд байна.", 1], ["사천 원이에요?", "sacheon wonieyo?", "4,000 вон уу?", 0, "사천오백 = 4,500. 사천 = 4,000."]]]
+    ] },
+  { id: "food", ic: "🍲", place: "식당", placeMn: "Хоолны газар", npc: "사장님 (эзэн)", task: "Хоолны газарт бибимбап (비빔밥) идэх", item: ["🍲", "비빔밥", "бибимбап"], cost: 9000,
+    steps: [
+      ["어서 오세요! 몇 분이세요?", "eoseo oseyo! myeot buniseyo?", "Тавтай морил! Хэдүүлээ вэ?", [["한 살이에요.", "han sarieyo.", "Нэг настай.", 0, "살 = нас 😄 Хүнийг 명-ээр тоолно."], ["한 명이에요.", "han myeongieyo.", "Ганцаараа (1 хүн).", 1], ["하나 시예요.", "hana siyeyo.", "(буруу)", 0, "Хүн тоолохдоо: 한 명, 두 명…"]]],
+      ["뭐 드릴까요?", "mwo deurilkkayo?", "Юу авах вэ?", [["비빔밥 하나 주세요.", "bibimbap hana juseyo.", "Нэг бибимбап өгөөч.", 1], ["비빔밥 만들어요.", "bibimbap mandeureoyo.", "Бибимбап хийнэ.", 0, "만들어요 = хийнэ. Захиалахдаа «주세요»."], ["김치 싫어요.", "gimchi sireoyo.", "Кимчид дургүй.", 0, "Кимчигүй Солонгос байхгүй шүү 😄"]]],
+      ["맵게 해 드릴까요?", "maepge hae deurilkkayo?", "Халуун ногоотой болгох уу?", [["배불러요.", "baebulleoyo.", "Цадсан.", 0, "배불러요 = цадсан. Одоохондоо идээгүй байна шүү дээ."], ["추워요.", "chuwoyo.", "Даарч байна.", 0, "추워요 = хүйтэн."], ["조금만 맵게 해 주세요.", "jogeumman maepge hae juseyo.", "Жаахан л халуун болгоорой.", 1]]],
+      ["(хоол идсэний дараа) 맛있게 드셨어요?", "masitge deusyeosseoyo?", "Сайхан идэв үү?", [["잘 먹겠습니다!", "jal meokgesseumnida!", "Сайхан идье!", 0, "Хоолны ӨМНӨ: 잘 먹겠습니다. ДАРАА: 정말 맛있었어요 / 잘 먹었습니다."], ["네, 정말 맛있었어요!", "ne, jeongmal masisseosseoyo!", "Тийм, үнэхээр амттай байлаа!", 1]]]
+    ] },
+  { id: "metro", ic: "🚇", place: "지하철역", placeMn: "Метроны буудал", npc: "역무원 (ажилтан)", task: "Метроны карт аваад Кёнбоккүн рүү зам асуу", item: ["💳", "교통카드", "тээврийн карт"], cost: 15000,
+    steps: [
+      ["무엇을 도와드릴까요?", "mueoseul dowadeurilkkayo?", "Юугаар туслах вэ?", [["교통카드 팔고 싶어요.", "gyotongkadeu palgo sipeoyo.", "Тээврийн карт зармаар байна.", 0, "팔다 = зарах, 사다 = худалдаж авах."], ["교통카드 사고 싶어요.", "gyotongkadeu sago sipeoyo.", "Тээврийн карт авмаар байна.", 1], ["기차 좋아요.", "gicha joayo.", "Галт тэрэг сайхан.", 0, "기차 = галт тэрэг."]]],
+      ["오천 원이에요. 충전도 해 드릴까요?", "ocheon wonieyo. chungjeondo hae deurilkkayo?", "5,000 вон. Мөнгө цэнэглэх үү?", [["충전기 있어요?", "chungjeongi isseoyo?", "Цэнэглэгч байна уу?", 0, "충전기 = утасны цэнэглэгч 🔌"], ["네, 만 원 충전해 주세요.", "ne, man won chungjeonhae juseyo.", "Тийм, 10,000 вон цэнэглээд өгөөч.", 1], ["아니요, 안 사요.", "aniyo, an sayo.", "Үгүй, авахгүй.", 0, "Картаа авах гэж ирсэн шүү дээ!"]]],
+      ["어디 가세요?", "eodi gaseyo?", "Хаашаа явах вэ?", [["경복궁에서 왔어요.", "gyeongbokgung-eseo wasseoyo.", "Кёнбоккүнээс ирсэн.", 0, "-에서 왔어요 = -аас ирсэн. Очих газар бол «-에 가요»."], ["경복궁에 어떻게 가요?", "gyeongbokgung-e eotteoke gayo?", "Кёнбоккүн рүү яаж очих вэ?", 1], ["경복궁이 좋아요.", "gyeongbokgung-i joayo.", "Кёнбоккүн сайхан.", 0, "Зам асуухдаа «어떻게 가요?»."]]],
+      ["3호선 타고 경복궁역에서 내리세요. 아니면 저 큰 길로 쭉 가세요!", "samhoseon tago gyeongbokgungyeogeseo naeriseyo. animyeon jeo keun gillo jjuk gaseyo!", "3-р шугамд суугаад Кёнбоккүн буудалд буу. Эсвэл тэр том замаар шууд яваарай!", [["알겠어요, 감사합니다!", "algesseoyo, gamsahamnida!", "Ойлголоо, баярлалаа!", 1], ["몰라요.", "mollayo.", "Мэдэхгүй.", 0, "Ойлгосон бол «알겠어요»."]]]
+    ] },
+  { id: "palace", ic: "🏯", place: "경복궁", placeMn: "Кёнбоккүн ордон", npc: "한복 안내원 (хөтөч)", task: "Кёнбоккүн ордонд тасалбар аваад зургаа авахуул", item: ["📷", "경복궁 사진", "ордны зураг"], cost: 3000,
+    steps: [
+      ["안녕하세요! 경복궁에 오신 것을 환영합니다.", "annyeonghaseyo! gyeongbokgung-e osin geoseul hwanyeonghamnida.", "Сайн байна уу! Кёнбоккүнд тавтай морил.", [["입장권 한 명 주세요.", "ipjanggwon han myeong juseyo.", "(буруу тоолох үг)", 0, "Тасалбар, цаас зэргийг 장-аар тоолно: «한 장»."], ["왕 어디 있어요?", "wang eodi isseoyo?", "Хаан хаана байна?", 0, "Хаан одоо байхгүй ээ 😄"], ["입장권 한 장 주세요.", "ipjanggwon han jang juseyo.", "Нэг тасалбар өгөөч.", 1]]],
+      ["어른이세요? 학생이세요?", "eoreuniseyo? haksaengiseyo?", "Том хүн үү? Сурагч уу?", [["학생이에요.", "haksaengieyo.", "Сурагч/оюутан.", 1], ["학교예요.", "hakgyoyeyo.", "Сургууль.", 0, "학교 = сургууль, 학생 = сурагч."], ["선생님 좋아요.", "seonsaengnim joayo.", "Багш сайхан.", 0, "선생님 = багш."]]],
+      ["삼천 원입니다. 즐거운 시간 보내세요!", "samcheon wonimnida. jeulgeoun sigan bonaeseyo!", "3,000 вон. Сайхан цагийг өнгөрүүлээрэй!", [["사진 좀 찍어 주세요.", "sajin jom jjigeo juseyo.", "Зураг авч өгөөч.", 1], ["사진이에요.", "sajinieyo.", "Зураг байна.", 0, "Гуйхдаа «… 주세요»."], ["사진 싫어요.", "sajin sireoyo.", "Зурагт дургүй.", 0, "Ордны өмнө зураг авахуулахгүй юм уу 😄"]]],
+      ["자, 하나, 둘, 셋… 김치~!", "ja, hana, dul, set… gimchi~!", "За, нэг, хоёр, гурав… «Кимчи»!", [["감사합니다!", "gamsahamnida!", "Баярлалаа!", 1], ["죄송합니다.", "joesonghamnida.", "Уучлаарай.", 0, "Тусалсанд нь талархаарай."]]]
+    ] },
+  { id: "tower", ic: "🗼", place: "남산서울타워", placeMn: "Намсан цамхаг", npc: "매표원 (кассчин)", task: "Намсан ууланд гараад цамхагийн тасалбарыг хямдруулж ав", item: ["🗼", "전망대 표", "цамхагийн тасалбар"], cost: 8000,
+    steps: [
+      ["전망대 표 사시겠어요?", "jeonmangdae pyo sasigesseoyo?", "Ажиглах тавцангийн тасалбар авах уу?", [["네, 얼마예요?", "ne, eolmayeyo?", "Тийм, хэд вэ?", 1], ["어디예요?", "eodiyeyo?", "Хаана вэ?", 0, "Та аль хэдийн цамхагийн доор байна 😄"]]],
+      ["만 원이에요.", "man wonieyo.", "10,000 вон.", [["좀 비싸요. 학생 할인 돼요?", "jom bissayo. haksaeng harin dwaeyo?", "Жаахан үнэтэй. Сурагчийн хөнгөлөлт байна уу?", 1], ["싸요!", "ssayo!", "Хямдхан!", 0, "Хямдруулах гэж байгаа шүү дээ 😉"], ["백 원 주세요.", "baek won juseyo.", "100 вон өгөөч.", 0, "Та мөнгө төлөх ёстой 😄"]]],
+      ["네, 학생은 팔천 원이에요.", "ne, haksaengeun palcheon wonieyo.", "Тийм, сурагчид 8,000 вон.", [["좋아요, 여기 있어요!", "joayo, yeogi isseoyo!", "Сайн байна, энд байна!", 1], ["칠천 원이에요?", "chilcheon wonieyo?", "7,000 вон уу?", 0, "팔천 = 8,000, 칠천 = 7,000."]]]
+    ] }
+];
+// Collectible word cards: [ko, rom, mn, x, z]
+const WORDS = [
+  ["친구", "chingu", "найз", -8, 30], ["사랑", "sarang", "хайр", 12, -20], ["물", "mul", "ус", -70, 60], ["학교", "hakgyo", "сургууль", -130, -60],
+  ["집", "jip", "гэр", 70, 60], ["책", "chaek", "ном", -70, -120], ["하늘", "haneul", "тэнгэр", 165, -150], ["나무", "namu", "мод", 40, 190],
+  ["자동차", "jadongcha", "машин", 70, -30], ["길", "gil", "зам", 0, -100], ["시간", "sigan", "цаг", -130, 60], ["돈", "don", "мөнгө", 70, -120],
+  ["가족", "gajok", "гэр бүл", -60, 195], ["날씨", "nalssi", "цаг агаар", 130, 20], ["고양이", "goyangi", "муур", -170, -120], ["강아지", "gangaji", "гөлөг", 140, 70],
+  ["꽃", "kkot", "цэцэг", -25, -180], ["바다", "bada", "далай", 0, 140], ["음악", "eumak", "хөгжим", 100, 190], ["행복", "haengbok", "аз жаргал", 175, -100]
+];
+// Shop signs around town teach words as you walk by: [ko, rom, mn, bg]
+const SIGNS = [["약국", "yakguk", "эмийн сан", "#2ea36b"], ["은행", "eunhaeng", "банк", "#2f6bff"], ["치킨", "chikin", "тахианы мах", "#f08a24"], ["노래방", "noraebang", "караоке", "#a23bd1"],
+  ["병원", "byeongwon", "эмнэлэг", "#e5484d"], ["서점", "seojeom", "номын дэлгүүр", "#7a5230"], ["빵집", "ppangjip", "талх нарийн боов", "#d39b2a"], ["꽃집", "kkotjip", "цэцгийн дэлгүүр", "#e05897"],
+  ["미용실", "miyongsil", "үсчин", "#c2417a"], ["우체국", "ucheguk", "шуудан", "#d93d43"], ["세탁소", "setakso", "хими цэвэрлэгээ", "#3a8fb7"], ["학원", "hagwon", "сургалтын төв", "#3c4bbd"],
+  ["안경점", "angyeongjeom", "нүдний шил", "#444b5a"], ["옷가게", "otgage", "хувцасны дэлгүүр", "#c74b6d"], ["떡볶이", "tteokbokki", "ттокпокки", "#e2312d"], ["라면", "ramyeon", "рамён", "#e8a317"]];
+
+/* ================= SAVE ================= */
+let save = store.get("seoul3d", null) || { name: "", look: null, done: {}, money: 50000, items: [], words: [], signs: [] };
+save.done ||= {}; save.items ||= []; save.words ||= []; save.signs ||= [];
+const persist = () => store.set("seoul3d", save);
+
+/* ================= THREE SETUP ================= */
+const canvas = $("c");
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: !isTouch || devicePixelRatio < 2, powerPreference: "high-performance" });
+renderer.setPixelRatio(Math.min(devicePixelRatio, isTouch ? 1.6 : 2));
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.outputEncoding = THREE.sRGBEncoding;
+const scene = new THREE.Scene();
+scene.background = new THREE.Color("#9fd3ff");
+scene.fog = new THREE.Fog("#cfe7ff", 140, 520);
+const camera = new THREE.PerspectiveCamera(60, 1, 0.1, 900);
+scene.add(new THREE.HemisphereLight("#dff1ff", "#7a8a5a", 0.75));
+const sun = new THREE.DirectionalLight("#fff3dd", 0.95);
+sun.castShadow = true;
+sun.shadow.mapSize.set(isTouch ? 1024 : 2048, isTouch ? 1024 : 2048);
+Object.assign(sun.shadow.camera, { left: -60, right: 60, top: 60, bottom: -60, near: 1, far: 300 });
+sun.shadow.bias = -0.0005;
+scene.add(sun, sun.target);
+
+const matCache = {};
+const M = (color, opts) => { const k = color + JSON.stringify(opts || {}); return matCache[k] ||= new THREE.MeshLambertMaterial({ color, ...opts }); };
+function mesh(geo, mat, x, y, z, cast = true, recv = true) { const m = new THREE.Mesh(geo, mat); m.position.set(x, y, z); m.castShadow = cast; m.receiveShadow = recv; scene.add(m); return m; }
+function canvasTex(w, h, draw) { const c = document.createElement("canvas"); c.width = w; c.height = h; draw(c.getContext("2d"), w, h); const t = new THREE.CanvasTexture(c); t.encoding = THREE.sRGBEncoding; t.anisotropy = 4; return t; }
+
+/* ================= WORLD ================= */
+const colliders = []; // {x0,x1,z0,z1,top}
+const addBox = (x0, x1, z0, z1, top) => colliders.push({ x0, x1, z0, z1, top });
+const RIVER = { z0: 112, z1: 158 }, BRIDGE = { x0: -9, x1: 9, z0: 104, z1: 166 };
+const HILL = { x: 172, z: -158, r: 62, h: 24 };
+const VR = [[-160, 12], [-100, 12], [-40, 12], [0, 22], [40, 12], [100, 12]]; // vertical roads [x,width] from z=-150 to 106
+const HR = [[-150, 12], [-90, 12], [-30, 12], [30, 12], [90, 12]];            // horizontal roads [z,width]
+const HR_X1 = z => z <= -150 ? 112 : 205;
+const smooth = t => t <= 0 ? 0 : t >= 1 ? 1 : t * t * (3 - 2 * t);
+function terrain(x, z) {
+  let h = 0;
+  const d = Math.hypot(x - HILL.x, z - HILL.z); if (d < HILL.r) h = HILL.h * smooth((1 - d / HILL.r) / .82); // flat top for the tower plaza
+  if (z > RIVER.z0 - 4 && z < RIVER.z1 + 4) { const e = Math.min(z - (RIVER.z0 - 4), RIVER.z1 + 4 - z); h = -4 * smooth(e / 6); }
+  return h;
+}
+const onBridge = (x, z) => x > BRIDGE.x0 && x < BRIDGE.x1 && z > BRIDGE.z0 && z < BRIDGE.z1;
+const BRIDGE_Y = 0.35;
+
+function buildWorld() {
+  // ground
+  const g = new THREE.PlaneGeometry(460, 460, 150, 150); g.rotateX(-Math.PI / 2);
+  const pos = g.attributes.position, col = [];
+  const grass = new THREE.Color("#7fbf5a"), dirt = new THREE.Color("#c9b98a"), deep = new THREE.Color("#3e6b4a"), hill = new THREE.Color("#5f9e4c");
+  for (let i = 0; i < pos.count; i++) {
+    const x = pos.getX(i), z = pos.getZ(i), h = terrain(x, z); pos.setY(i, h);
+    const c = h < -0.5 ? dirt : h > 1 ? hill.clone().lerp(deep, Math.min(1, h / 30)) : grass; col.push(c.r, c.g, c.b);
+  }
+  g.setAttribute("color", new THREE.Float32BufferAttribute(col, 3)); g.computeVertexNormals();
+  mesh(g, new THREE.MeshLambertMaterial({ vertexColors: true }), 0, 0, 0, false, true);
+  // water
+  const water = mesh(new THREE.PlaneGeometry(600, RIVER.z1 - RIVER.z0 + 8).rotateX(-Math.PI / 2), new THREE.MeshPhongMaterial({ color: "#3d8fd6", shininess: 90, transparent: true, opacity: .9 }), 0, -1.1, (RIVER.z0 + RIVER.z1) / 2, false, true);
+  water.userData.water = true; window.WATER = water;
+  // city pavement + roads
+  const pave = M("#a8a49b"), road = M("#3b3f47"), line = M("#f2d14b"), white = M("#f4f4f4");
+  mesh(new THREE.PlaneGeometry(400, 262).rotateX(-Math.PI / 2), pave, -5, 0.02, -24, false, true);
+  for (const [x, w] of VR) {
+    const z0 = x === 0 ? -160 : -150, z1 = 106;
+    mesh(new THREE.PlaneGeometry(w, z1 - z0).rotateX(-Math.PI / 2), x === 0 ? M("#c2b59c") : road, x, 0.05, (z0 + z1) / 2, false, true);
+    if (x !== 0) for (let z = z0 + 4; z < z1; z += 8) mesh(new THREE.PlaneGeometry(.3, 4).rotateX(-Math.PI / 2), line, x, 0.07, z, false, false);
+  }
+  for (const [z, w] of HR) {
+    const x0 = -205, x1 = HR_X1(z);
+    mesh(new THREE.PlaneGeometry(x1 - x0, w).rotateX(-Math.PI / 2), road, (x0 + x1) / 2, 0.06, z, false, true);
+    for (let x = x0 + 4; x < x1; x += 8) if (Math.abs(x) > 14) mesh(new THREE.PlaneGeometry(4, .3).rotateX(-Math.PI / 2), line, x, 0.08, z, false, false);
+    // crosswalk on the plaza
+    for (let i = -5; i <= 5; i++) mesh(new THREE.PlaneGeometry(1.1, w - 1).rotateX(-Math.PI / 2), white, i * 2, 0.08, z, false, false);
+  }
+  // plaza flower beds along the boulevard
+  for (let z = -140; z < 100; z += 24) if (Math.abs(z - 20) > 14 && Math.abs(z + 60) > 10) { mesh(new THREE.BoxGeometry(3, .6, 10), M("#8b6b4a"), 0, .3, z); mesh(new THREE.BoxGeometry(2.6, .4, 9.6), M("#e86aa0"), 0, .75, z); addBox(-1.5, 1.5, z - 5, z + 5, .95); }
+  buildStatue(0, -60);
+  // bridge
+  mesh(new THREE.BoxGeometry(BRIDGE.x1 - BRIDGE.x0, .6, BRIDGE.z1 - BRIDGE.z0), M("#9aa1ab"), 0, BRIDGE_Y - .3, (BRIDGE.z0 + BRIDGE.z1) / 2);
+  for (const sx of [BRIDGE.x0, BRIDGE.x1]) { mesh(new THREE.BoxGeometry(.5, 1.2, BRIDGE.z1 - BRIDGE.z0), M("#e5484d"), sx, BRIDGE_Y + .6, (BRIDGE.z0 + BRIDGE.z1) / 2); addBox(sx - .3, sx + .3, BRIDGE.z0, BRIDGE.z1, 1.6); }
+  for (let z = RIVER.z0; z <= RIVER.z1; z += 15) mesh(new THREE.CylinderGeometry(1.2, 1.4, 5, 10), M("#8a9099"), 0, -3, z, false);
+  buildPalace(); buildTower(); buildCity(); buildPark(); buildMountains();
+}
+
+const WIN = canvasTex(64, 64, (c) => { c.fillStyle = "#fff"; c.fillRect(0, 0, 64, 64); c.fillStyle = "#cfd6e0"; c.fillRect(0, 0, 64, 4); c.fillStyle = "#5b7aa6"; c.fillRect(10, 14, 44, 36); c.fillStyle = "#8fb1dc"; c.fillRect(10, 14, 20, 36); });
+WIN.wrapS = WIN.wrapT = THREE.RepeatWrapping;
+function scaledBox(w, h, d, tile = 4) {
+  const g = new THREE.BoxGeometry(w, h, d), uv = g.attributes.uv;
+  const dims = [[d, h], [d, h], [w, d], [w, d], [w, h], [w, h]];
+  for (let f = 0; f < 6; f++) for (let v = 0; v < 4; v++) { const i = f * 4 + v; uv.setXY(i, uv.getX(i) * Math.max(1, Math.round(dims[f][0] / tile)), uv.getY(i) * Math.max(1, Math.round(dims[f][1] / 3.6))); }
+  return g;
+}
+function signTex(text, bg, fg = "#fff", sub) {
+  return canvasTex(512, 128, (c, w, h) => {
+    c.fillStyle = bg; c.fillRect(0, 0, w, h); c.strokeStyle = "#ffffff55"; c.lineWidth = 6; c.strokeRect(6, 6, w - 12, h - 12);
+    c.fillStyle = fg; c.textAlign = "center"; c.textBaseline = "middle";
+    c.font = `800 ${sub ? 60 : 74}px "Noto Sans KR", sans-serif`; c.fillText(text, w / 2, sub ? 52 : h / 2 + 4);
+    if (sub) { c.font = `700 28px Manrope, sans-serif`; c.globalAlpha = .9; c.fillText(sub, w / 2, 102); }
+  });
+}
+const signSpots = []; // {x,z,ko,rom,mn}
+// face: 'E','W','N','S' — the direction the storefront looks toward.
+const FACE = { E: [1, 0], W: [-1, 0], N: [0, -1], S: [0, 1] };
+function building(cx, cz, w, d, h, color, face, sign) {
+  const walls = new THREE.MeshLambertMaterial({ color, map: WIN }), roof = M("#7d828c");
+  const m = mesh(scaledBox(w, h, d), [walls, walls, roof, roof, walls, walls], cx, h / 2, cz);
+  addBox(cx - w / 2, cx + w / 2, cz - d / 2, cz + d / 2, h);
+  if (h > 14 && Math.random() < .5) mesh(new THREE.BoxGeometry(2, 2, 2), M("#9aa0aa"), cx + w / 4, h + 1, cz - d / 4);
+  if (sign) {
+    const [fx, fz] = FACE[face], sw = Math.min(face === "E" || face === "W" ? d : w, 12) * .9;
+    const p = new THREE.Mesh(new THREE.PlaneGeometry(sw, sw / 4), new THREE.MeshBasicMaterial({ map: signTex(sign.text, sign.bg, "#fff", sign.sub) }));
+    p.position.set(cx + fx * (w / 2 + .06), Math.min(h - 1, 5.2), cz + fz * (d / 2 + .06)); p.rotation.y = Math.atan2(fx, fz); scene.add(p);
+    // awning
+    const aw = new THREE.Mesh(new THREE.BoxGeometry(face === "E" || face === "W" ? 1.6 : sw, .25, face === "E" || face === "W" ? sw : 1.6), M(sign.bg));
+    aw.position.set(cx + fx * (w / 2 + .8), 3.4, cz + fz * (d / 2 + .8)); aw.castShadow = true; scene.add(aw);
+    // glass door
+    const door = new THREE.Mesh(new THREE.PlaneGeometry(2.4, 2.8), M("#9fc6e8"));
+    door.position.set(cx + fx * (w / 2 + .05), 1.4, cz + fz * (d / 2 + .05)); door.rotation.y = p.rotation.y; scene.add(door);
+    if (sign.word) signSpots.push({ x: cx + fx * (w / 2 + 3), z: cz + fz * (d / 2 + 3), ...sign.word });
+  }
+  return m;
+}
+// Seeded random so every player sees the same city.
+let seed = 1337; const rnd = () => ((seed = (seed * 16807) % 2147483647) - 1) / 2147483646;
+const BCOL = ["#f2efe9", "#e9dfd0", "#d7dde6", "#c8d3dd", "#efe3cf", "#e8d6d6", "#dfe8dc", "#b9c2cf", "#f6f0e2", "#d9cbb8", "#a9b6c6", "#ead9c2"];
+const SHOPS = [ // mission storefronts: cx,cz,w,d,face,color
+  { m: "cvs", cx: -22.5, cz: 48, w: 15, d: 12, face: "E", bg: "#2f9e5b", color: "#eef3ef" },
+  { m: "food", cx: -22.5, cz: 72, w: 15, d: 12, face: "E", bg: "#c0392b", color: "#f1e4d3" },
+  { m: "fruit", cx: 22.5, cz: 48, w: 15, d: 12, face: "W", bg: "#e67e22", color: "#fbefdc" },
+  { m: "cafe", cx: 22.5, cz: 72, w: 15, d: 12, face: "W", bg: "#6b4226", color: "#efe6da" },
+  { m: "metro", cx: 22.5, cz: 0, w: 15, d: 14, face: "W", bg: "#1f5fbf", color: "#dfe6f0" }
+];
+const reserved = [[-80, 80, -230, -156], [-14, 14, 8, 32]]; // palace, spawn
+const isReserved = (x0, x1, z0, z1) => reserved.some(r => x1 > r[0] && x0 < r[1] && z1 > r[2] && z0 < r[3]) || Math.hypot(Math.max(x0, Math.min(HILL.x, x1)) - HILL.x, Math.max(z0, Math.min(HILL.z, z1)) - HILL.z) < HILL.r + 4;
+function buildCity() {
+  for (const s of SHOPS) {
+    const ms = MISSIONS.find(q => q.id === s.m);
+    building(s.cx, s.cz, s.w, s.d, s.m === "metro" ? 8 : 10 + (s.cz % 5), s.color, s.face, { text: ms.place, bg: s.bg, sub: ms.placeMn });
+    reserved.push([s.cx - s.w / 2 - 1, s.cx + s.w / 2 + 1, s.cz - s.d / 2 - 1, s.cz + s.d / 2 + 1]);
+    const [fx, fz] = FACE[s.face]; s.npc = [s.cx + fx * (s.w / 2 + 2.2), s.cz + fz * (s.d / 2 + 2.2), Math.atan2(fx, fz)];
+  }
+  // metro entrance stairs sign
+  const xs = [-205, ...VR.flatMap(([x, w]) => [x - w / 2, x + w / 2]), 205];
+  const zs = [-220, ...HR.flatMap(([z, w]) => [z - w / 2, z + w / 2]), 106];
+  let sIdx = 0;
+  for (let i = 0; i < xs.length - 1; i += 2) for (let j = 0; j < zs.length - 1; j += 2) {
+    const bx0 = xs[i] + 3, bx1 = xs[i + 1] - 3, bz0 = zs[j] + 3, bz1 = zs[j + 1] - 3;
+    if (bx1 - bx0 < 8 || bz1 - bz0 < 8) continue;
+    // split block into lots along its longer side
+    const along = bx1 - bx0 > bz1 - bz0;
+    const L = along ? bx1 - bx0 : bz1 - bz0, W = along ? bz1 - bz0 : bx1 - bx0;
+    const rows = W > 30 ? 2 : 1;
+    for (let r = 0; r < rows; r++) {
+      let t = 0;
+      while (t < L - 6) {
+        const len = Math.min(L - t, 10 + rnd() * 12), wid = W / rows - (rows > 1 ? 2 : 0);
+        const a0 = t + .8, a1 = t + len - .8; t += len;
+        const b0 = r * (W / rows) + (r ? 2 : 0), b1 = b0 + wid - (rows > 1 && !r ? 0 : 0);
+        let x0, x1, z0, z1; if (along) { x0 = bx0 + a0; x1 = bx0 + a1; z0 = bz0 + b0; z1 = bz0 + b1; } else { z0 = bz0 + a0; z1 = bz0 + a1; x0 = bx0 + b0; x1 = bx0 + b1; }
+        if (x1 - x0 < 5 || z1 - z0 < 5 || isReserved(x0, x1, z0, z1)) continue;
+        const nearCenter = Math.hypot((x0 + x1) / 2, (z0 + z1) / 2) < 90;
+        const h = rnd() < .18 ? 30 + rnd() * 40 : (nearCenter ? 9 : 7) + rnd() * 16;
+        // storefront faces the nearest road side
+        let face; if (along) face = r === 0 && rows === 2 ? "N" : r === 1 ? "S" : (rnd() < .5 ? "N" : "S"); else face = r === 0 && rows === 2 ? "W" : r === 1 ? "E" : (rnd() < .5 ? "W" : "E");
+        const sg = rnd() < .45 ? SIGNS[sIdx++ % SIGNS.length] : null;
+        building((x0 + x1) / 2, (z0 + z1) / 2, x1 - x0, z1 - z0, h, BCOL[Math.floor(rnd() * BCOL.length)], face, sg && { text: sg[0], bg: sg[3], word: { ko: sg[0], rom: sg[1], mn: sg[2] } });
+      }
+    }
+  }
+  // street trees + lamps on sidewalks
+  const trees = [];
+  for (const [x, w] of VR) if (x !== 0) for (let z = -140; z < 100; z += 14) for (const s of [-1, 1]) { const tx = x + s * (w / 2 + 1.6); if (!isReserved(tx - .5, tx + .5, z - .5, z + .5) && !HR.some(([hz]) => Math.abs(z - hz) < 9)) trees.push([tx, z, .8 + rnd() * .3]); }
+  for (let z = -150; z < 104; z += 12) for (const s of [-1, 1]) if (!HR.some(([hz]) => Math.abs(z - hz) < 9) && Math.abs(z - 20) > 10) trees.push([s * 9.5, z, 1]);
+  plantTrees(trees, "#3f8f45");
+  for (const [x, w] of VR) if (x !== 0) for (let z = -143; z < 100; z += 28) lamp(x + w / 2 + 1, z);
+}
+function lamp(x, z) { mesh(new THREE.CylinderGeometry(.12, .15, 6, 6), M("#4a4f59"), x, 3, z, true, false); mesh(new THREE.BoxGeometry(.9, .3, .5), M("#ffe9a8", { emissive: "#ffd36a", emissiveIntensity: .4 }), x - .3, 6, z, false, false); addBox(x - .25, x + .25, z - .25, z + .25, 6); }
+function plantTrees(list, crown) {
+  const trunk = new THREE.InstancedMesh(new THREE.CylinderGeometry(.25, .35, 3, 6), M("#7a5230"), list.length);
+  const leaf = new THREE.InstancedMesh(new THREE.IcosahedronGeometry(2, 0), M(crown, { flatShading: true }), list.length);
+  const o = new THREE.Object3D();
+  list.forEach(([x, z, s], i) => {
+    const y = terrain(x, z); o.position.set(x, y + 1.5 * s, z); o.scale.setScalar(s); o.rotation.set(0, 0, 0); o.updateMatrix(); trunk.setMatrixAt(i, o.matrix);
+    o.position.y = y + 4 * s; o.rotation.y = i; o.scale.set(s * 1.1, s, s * 1.1); o.updateMatrix(); leaf.setMatrixAt(i, o.matrix);
+    addBox(x - .4, x + .4, z - .4, z + .4, y + 6 * s);
+  });
+  for (const m of [trunk, leaf]) { m.castShadow = true; m.receiveShadow = true; scene.add(m); }
+}
+function tiledRoof(w, d, y, x, z, color = "#3c4a5c") {
+  const r = new THREE.Mesh(new THREE.ConeGeometry(1, 1, 4, 1), M(color, { flatShading: true }));
+  r.rotation.y = Math.PI / 4; r.scale.set(w * .78, 3.2, d * .78); r.position.set(x, y + 1.6, z); r.castShadow = true; scene.add(r);
+  const eave = new THREE.Mesh(new THREE.BoxGeometry(w + 2.4, .4, d + 2.4), M(color)); eave.position.set(x, y, z); eave.castShadow = true; scene.add(eave);
+}
+function buildPalace() {
+  const wall = M("#b8483d"), stone = M("#d8cbb0"), wood = M("#9b2f25"), green = M("#2e7d6b");
+  mesh(new THREE.PlaneGeometry(140, 58).rotateX(-Math.PI / 2), M("#e4d6b5"), 0, 0.04, -191, false, true);
+  const Z0 = -220, Z1 = -162, X0 = -70, X1 = 70, T = 2, H = 5;
+  const seg = (x0, x1, z0, z1) => { mesh(new THREE.BoxGeometry(x1 - x0, H, z1 - z0), wall, (x0 + x1) / 2, H / 2, (z0 + z1) / 2); mesh(new THREE.BoxGeometry(x1 - x0 + .6, .6, z1 - z0 + .6), M("#3c4a5c"), (x0 + x1) / 2, H + .3, (z0 + z1) / 2); addBox(x0, x1, z0, z1, H + .6); };
+  seg(X0, X1, Z0, Z0 + T); seg(X0, X0 + T, Z0, Z1); seg(X1 - T, X1, Z0, Z1); seg(X0, -6, Z1 - T, Z1); seg(6, X1, Z1 - T, Z1);
+  // Gwanghwamun-style gate
+  mesh(new THREE.BoxGeometry(26, 6, 6), stone, 0, 3, Z1 - 1); addBox(-13, -4, Z1 - 4, Z1 + 2, 6); addBox(4, 13, Z1 - 4, Z1 + 2, 6);
+  const arch = mesh(new THREE.BoxGeometry(7.6, 4.6, 6.4), M("#2a2420"), 0, 2.3, Z1 - 1, false); arch.material = M("#3a2e28");
+  mesh(new THREE.BoxGeometry(18, 4, 4.5), wood, 0, 8, Z1 - 1); tiledRoof(20, 7, 10.3, 0, Z1 - 1);
+  for (const sx of [-8, -3, 3, 8]) mesh(new THREE.BoxGeometry(.6, 4, .6), green, sx, 8, Z1 + 1.4, true, false);
+  const gs = new THREE.Mesh(new THREE.PlaneGeometry(9, 2.2), new THREE.MeshBasicMaterial({ map: signTex("경복궁", "#1f2b3a", "#ffd36a", "Кёнбоккүн ордон") }));
+  gs.position.set(0, 8.4, Z1 + 1.3); scene.add(gs);
+  // main hall on a stone platform
+  mesh(new THREE.BoxGeometry(40, 1.6, 24), stone, 0, .8, -196); addBox(-20, 20, -208, -184, 1.6);
+  mesh(new THREE.BoxGeometry(28, 7, 14), wood, 0, 5.1, -197); addBox(-14, 14, -204, -190, 9);
+  tiledRoof(32, 18, 9.2, 0, -197); tiledRoof(24, 12, 13.6, 0, -197);
+  for (let sx = -12; sx <= 12; sx += 4) mesh(new THREE.BoxGeometry(.8, 7, .8), green, sx, 5.1, -189.6, true, false);
+  // side pavilions
+  for (const sx of [-48, 48]) { mesh(new THREE.BoxGeometry(14, 5, 10), wood, sx, 2.5, -200); addBox(sx - 7, sx + 7, -205, -195, 5); tiledRoof(16, 12, 5.4, sx, -200); }
+  const pt = []; for (let i = 0; i < 18; i++) pt.push([-64 + i * 7.5, -214, 1.1]); for (let i = 0; i < 6; i++) pt.push([-62, -206 + i * 7, 1], [62, -206 + i * 7, 1]);
+  plantTrees(pt, "#4f9a5a");
+}
+function buildTower() {
+  const { x, z, h } = HILL;
+  mesh(new THREE.CylinderGeometry(9, 9, .4, 24), M("#cfc8bc"), x, h - .15, z, false, true); addBox(x - 3, x + 3, z - 3 - 8, z + 3 - 8, h + 46);
+  const tx = x, tz = z - 8;
+  mesh(new THREE.CylinderGeometry(2.2, 3, 4, 12), M("#e9e6df"), tx, h + 2, tz);
+  mesh(new THREE.CylinderGeometry(1.3, 1.7, 30, 12), M("#f2f0ea"), tx, h + 19, tz);
+  mesh(new THREE.CylinderGeometry(5.2, 4.2, 4.5, 16), M("#e8e4dc"), tx, h + 35, tz);
+  mesh(new THREE.CylinderGeometry(5.3, 5.3, 1.2, 16), M("#6f8fb8"), tx, h + 35.5, tz, false);
+  mesh(new THREE.CylinderGeometry(.3, .6, 14, 8), M("#d94f4f"), tx, h + 44, tz);
+  const ts = new THREE.Mesh(new THREE.PlaneGeometry(8, 2), new THREE.MeshBasicMaterial({ map: signTex("남산서울타워", "#1f2b3a", "#fff", "Намсан цамхаг") }));
+  ts.position.set(tx - 6, h + 3, tz + 6); ts.rotation.y = -Math.PI / 4; scene.add(ts);
+  // love-lock fence ring
+  for (let a = 0; a < Math.PI * 2; a += .18) { const fx = x + Math.cos(a) * 9, fz = z + Math.sin(a) * 9; mesh(new THREE.BoxGeometry(.2, 1.2, 1.6), M(["#ff5a5f", "#ffd23f", "#2f6bff", "#ff7eb6"][Math.floor(a * 5) % 4]), fx, h + 1.2, fz, false, false).rotation.y = -a; }
+  const ht = []; for (let i = 0; i < 70; i++) { const a = rnd() * 6.283, r = 14 + rnd() * 44, px = x + Math.cos(a) * r, pz = z + Math.sin(a) * r; if (Math.abs(px - x) < 4 && pz > z) continue; ht.push([px, pz, .9 + rnd() * .6]); }
+  plantTrees(ht, "#2f7a3b");
+}
+function buildStatue(x, z) {
+  mesh(new THREE.BoxGeometry(6, 3, 6), M("#a59f94"), x, 1.5, z); addBox(x - 3, x + 3, z - 3, z + 3, 3);
+  mesh(new THREE.BoxGeometry(2.4, 3, 1.6), M("#8c6d3f"), x, 4.5, z); mesh(new THREE.BoxGeometry(1.2, 1.2, 1.2), M("#8c6d3f"), x, 6.6, z);
+}
+function buildPark() {
+  mesh(new THREE.PlaneGeometry(400, 4).rotateX(-Math.PI / 2), M("#d9cfbd"), 0, 0.05, 172, false, true);
+  const pt = []; for (let i = 0; i < 90; i++) { const px = -195 + rnd() * 390, pz = 176 + rnd() * 40; if (Math.abs(px) < 8) continue; pt.push([px, pz, .8 + rnd() * .6]); }
+  plantTrees(pt, "#5aa84a");
+  for (let x = -150; x < 160; x += 40) { mesh(new THREE.BoxGeometry(3, .5, 1), M("#8b5e3c"), x + 14, .6, 168); addBox(x + 12.5, x + 15.5, 167.5, 168.5, .85); }
+  const ps = new THREE.Mesh(new THREE.PlaneGeometry(10, 2.5), new THREE.MeshBasicMaterial({ map: signTex("한강공원", "#2e7d6b", "#fff", "Хан голын цэцэрлэг") }));
+  ps.position.set(14, 3, 168); scene.add(ps); mesh(new THREE.BoxGeometry(.3, 3, .3), M("#4a4f59"), 14, 1.5, 168.2);
+  signSpots.push({ x: 14, z: 171, ko: "한강", rom: "hangang", mn: "Хан гол" });
+}
+function buildMountains() {
+  const mm = M("#7fa58a", { flatShading: true });
+  for (let i = 0; i < 26; i++) { const a = i / 26 * Math.PI * 2, r = 300 + (i % 3) * 30; const m = new THREE.Mesh(new THREE.ConeGeometry(60 + (i * 37 % 40), 60 + (i * 53 % 70), 7), mm); m.position.set(Math.cos(a) * r, 20, Math.sin(a) * r); scene.add(m); }
+}
+
+/* ================= CHARACTERS ================= */
+function faceTex(skin, face) {
+  return canvasTex(128, 128, (c) => {
+    c.fillStyle = skin; c.fillRect(0, 0, 128, 128); c.fillStyle = "#1b1b1b"; c.strokeStyle = "#1b1b1b"; c.lineWidth = 6; c.lineCap = "round";
+    if (face === 1) { c.fillRect(22, 44, 36, 18); c.fillRect(70, 44, 36, 18); c.fillRect(56, 48, 16, 5); }
+    else if (face === 2) { c.beginPath(); c.arc(40, 56, 10, Math.PI * 1.1, Math.PI * 1.9); c.stroke(); c.beginPath(); c.arc(88, 56, 10, Math.PI * 1.1, Math.PI * 1.9); c.stroke(); c.fillStyle = "#ff8fa3"; c.globalAlpha = .6; c.beginPath(); c.arc(28, 74, 9, 0, 7); c.arc(100, 74, 9, 0, 7); c.fill(); c.globalAlpha = 1; }
+    else { c.beginPath(); c.ellipse(42, 52, 6, 10, 0, 0, 7); c.ellipse(86, 52, 6, 10, 0, 0, 7); c.fill(); }
+    c.beginPath(); if (face === 3) { c.ellipse(64, 90, 8, 11, 0, 0, 7); c.fill(); } else { c.arc(64, 78, 20, Math.PI * .15, Math.PI * .85); c.stroke(); }
+  });
+}
+function makeChar(look) {
+  const L = { ...randLook(), ...look }, root = new THREE.Group(), body = new THREE.Group(); root.add(body);
+  const sk = M(L.skin), sh = M(L.shirt), pa = M(L.pants), shoe = M(L.shoes), hr = M(L.hair);
+  const part = (w, h, d, mat, x, y, z, parent = body) => { const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat); m.position.set(x, y, z); m.castShadow = true; parent.add(m); return m; };
+  const limb = (x, y) => { const g = new THREE.Group(); g.position.set(x, y, 0); body.add(g); return g; };
+  const lLeg = limb(-.24, 1.05), rLeg = limb(.24, 1.05), lArm = limb(-.69, 2.0), rArm = limb(.69, 2.0);
+  for (const lg of [lLeg, rLeg]) { part(.44, .85, .46, pa, 0, -.43, 0, lg); part(.46, .2, .52, shoe, 0, -.95, .03, lg); }
+  for (const ar of [lArm, rArm]) { part(.42, .55, .44, sh, 0, -.25, 0, ar); part(.38, .45, .4, sk, 0, -.75, 0, ar); }
+  part(.96, 1.0, .5, sh, 0, 1.53, 0);
+  const headMats = Array(6).fill(sk).map((m, i) => i === 4 ? new THREE.MeshLambertMaterial({ map: faceTex(L.skin, +L.face || 0) }) : m);
+  const head = new THREE.Mesh(new THREE.BoxGeometry(.78, .78, .78), headMats); head.position.set(0, 2.45, 0); head.castShadow = true; body.add(head);
+  const st = L.style;
+  if (st !== "none") {
+    if (st === "cap") { part(.84, .26, .84, sh, 0, .4, 0, head); part(.84, .08, .4, sh, 0, .3, .5, head); }
+    else { part(.86, .22, .86, hr, 0, .42, -.02, head); part(.86, .5, .18, hr, 0, .12, -.38, head); part(.12, .32, .84, hr, -.42, .2, 0, head); part(.12, .32, .84, hr, .42, .2, 0, head); }
+    if (st === "long") part(.84, .9, .2, hr, 0, -.35, -.42, head);
+    if (st === "bun") part(.38, .34, .38, hr, 0, .68, -.15, head);
+  }
+  root.userData = { lLeg, rLeg, lArm, rArm, body, head, phase: 0 };
+  return root;
+}
+function animChar(ch, speed, air, dt) {
+  const u = ch.userData; u.phase += dt * (4 + speed * 1.1);
+  const amp = air ? .5 : Math.min(1, speed / 6) * .85, s = Math.sin(u.phase) * amp;
+  const k = 1 - Math.exp(-dt * 14), tg = air ? [-.5, .5, 2.6, -2.6] : [s, -s, -s * .9, s * .9];
+  u.lLeg.rotation.x += (tg[0] - u.lLeg.rotation.x) * k; u.rLeg.rotation.x += (tg[1] - u.rLeg.rotation.x) * k;
+  u.lArm.rotation.x += ((air ? -2.6 : tg[2]) - u.lArm.rotation.x) * k; u.rArm.rotation.x += ((air ? -2.6 : tg[3]) - u.rArm.rotation.x) * k;
+  u.body.position.y = air ? 0 : Math.abs(Math.cos(u.phase)) * .08 * amp;
+}
+function labelSprite(text, bg = "#1b1f2acc", fg = "#fff", size = 1) {
+  const t = canvasTex(512, 128, (c, w, h) => {
+    c.font = `800 54px "Noto Sans KR", Manrope, sans-serif`; const tw = Math.min(w - 8, c.measureText(text).width + 48);
+    c.fillStyle = bg; const x = (w - tw) / 2; c.beginPath(); if (c.roundRect) c.roundRect(x, 18, tw, 92, 46); else c.rect(x, 18, tw, 92); c.fill();
+    c.fillStyle = fg; c.textAlign = "center"; c.textBaseline = "middle"; c.fillText(text, w / 2, 66, w - 40);
+  });
+  const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: t, depthWrite: false, transparent: true })); s.scale.set(4 * size, 1 * size, 1); s.renderOrder = 5; return s;
+}
+function bubble(ch, text) {
+  if (ch.userData.bub) ch.remove(ch.userData.bub);
+  const b = labelSprite(text, "#ffffffee", "#1b1f2a", 1.1); b.position.y = 4.3; ch.add(b); ch.userData.bub = b; ch.userData.bubT = 6;
+}
+
+/* ================= NPCs & PICKUPS ================= */
+const npcs = []; // {m, ch, x,z, mark}
+const NPC_LOOKS = { cvs: { shirt: "#2f9e5b", hair: "#1c1a1a", style: "short" }, fruit: { shirt: "#ff9f1c", hair: "#4a2e1c", style: "bun", skin: "#f5c9a0" }, cafe: { shirt: "#6b4226", style: "cap", shoes: "#111111" },
+  food: { shirt: "#ffffff", hair: "#1c1a1a", style: "short", pants: "#111111" }, metro: { shirt: "#1f5fbf", style: "cap", pants: "#24324d" }, palace: { shirt: "#ff7eb6", pants: "#7b5cff", style: "long", hair: "#1c1a1a" }, tower: { shirt: "#2ec4b6", style: "short", hair: "#8a5a2b" } };
+function buildNPCs() {
+  const spots = { palace: [7, -154, 0], tower: [HILL.x - 5, HILL.z + 1, -Math.PI / 2] };
+  for (const s of SHOPS) spots[s.m] = s.npc;
+  for (const q of MISSIONS) {
+    const [x, z, ry] = spots[q.id], ch = makeChar({ skin: "#f5c9a0", pants: "#24324d", shoes: "#111111", face: 0, ...NPC_LOOKS[q.id] });
+    ch.position.set(x, Math.max(0, terrain(x, z)), z); ch.rotation.y = ry; scene.add(ch);
+    const tag = labelSprite(q.npc.split(" ")[0], "#ff5a5fdd"); tag.position.y = 3.4; ch.add(tag);
+    const mark = labelSprite("!", "#ffb627", "#1b1f2a", .9); mark.scale.set(1.1, 1.1, 1); mark.position.y = 4.4; ch.add(mark);
+    addBox(x - .6, x + .6, z - .6, z + .6, ch.position.y + 3);
+    npcs.push({ q, ch, x, z, mark, ry });
+  }
+}
+const cards = [];
+function buildCards() {
+  for (const [ko, rom, mn, x, z] of WORDS) {
+    const g = new THREE.Group(), t = canvasTex(256, 320, (c, w, h) => {
+      const gr = c.createLinearGradient(0, 0, 0, h); gr.addColorStop(0, "#ffffff"); gr.addColorStop(1, "#ffe7ee"); c.fillStyle = gr; c.fillRect(0, 0, w, h);
+      c.strokeStyle = "#ff5a5f"; c.lineWidth = 14; c.strokeRect(7, 7, w - 14, h - 14); c.fillStyle = "#1b1f2a"; c.textAlign = "center"; c.textBaseline = "middle";
+      c.font = `800 ${ko.length > 2 ? 70 : 96}px "Noto Sans KR", sans-serif`; c.fillText(ko, w / 2, 150); c.font = "800 30px Manrope"; c.fillStyle = "#ff5a5f"; c.fillText("단어 카드", w / 2, 50);
+    });
+    const mat = new THREE.MeshBasicMaterial({ map: t, side: THREE.DoubleSide });
+    g.add(new THREE.Mesh(new THREE.PlaneGeometry(1.6, 2), mat)); const y = Math.max(0, terrain(x, z)) + 1.8; g.position.set(x, y, z); scene.add(g);
+    const glow = new THREE.Mesh(new THREE.CylinderGeometry(1.2, 1.2, .05, 20), new THREE.MeshBasicMaterial({ color: "#ffb627", transparent: true, opacity: .45 })); glow.position.set(x, y - 1.7, z); scene.add(glow);
+    const c = { ko, rom, mn, g, glow, y, got: save.words.includes(ko) }; if (c.got) { g.visible = glow.visible = false; } cards.push(c);
+  }
+}
+// moving cars on horizontal roads
+const cars = [];
+function buildCars() {
+  const colors = ["#e5484d", "#ffffff", "#1b1f2a", "#2f6bff", "#ffd23f", "#9aa0aa", "#3bb273"];
+  HR.forEach(([z], i) => { for (let k = 0; k < 3; k++) { const dir = (i + k) % 2 ? 1 : -1, g = new THREE.Group(), c = M(colors[(i * 3 + k) % colors.length]);
+    const b = new THREE.Mesh(new THREE.BoxGeometry(4.2, 1.1, 2), c); b.position.y = .85; b.castShadow = true; g.add(b);
+    const top = new THREE.Mesh(new THREE.BoxGeometry(2.3, .8, 1.8), M("#9fc6e8")); top.position.set(-.2, 1.75, 0); g.add(top);
+    for (const [wx, wz] of [[-1.3, -1], [1.3, -1], [-1.3, 1], [1.3, 1]]) { const w = new THREE.Mesh(new THREE.CylinderGeometry(.42, .42, .3, 10).rotateX(Math.PI / 2), M("#222")); w.position.set(wx, .42, wz); g.add(w); }
+    g.rotation.y = dir > 0 ? 0 : Math.PI; const x0 = -200, x1 = HR_X1(z) - 5; g.position.set(x0 + (x1 - x0) * ((k * .33 + i * .17) % 1), 0, z + dir * 3); scene.add(g);
+    cars.push({ g, dir, x0, x1, v: 9 + (k * 3 + i) % 6 }); } });
+}
+
+/* ================= PLAYER & PHYSICS ================= */
+const P = { x: 0, y: 0, z: 22, vy: 0, ry: Math.PI, ground: true, speed: 0, ch: null };
+const R = .55;
+function supportAt(x, z, feetY) {
+  let h = onBridge(x, z) ? BRIDGE_Y : terrain(x, z);
+  for (const b of colliders) if (x > b.x0 - R * .4 && x < b.x1 + R * .4 && z > b.z0 - R * .4 && z < b.z1 + R * .4 && feetY >= b.top - .45 && b.top > h) h = b.top;
+  return h;
+}
+const blocked = (x, z) => (!onBridge(x, z) && terrain(x, z) < -.6) || x < -205 || x > 215 || z < -225 || z > 222;
+function moveTo(nx, nz) {
+  if (blocked(nx, P.z)) nx = P.x; if (blocked(nx, nz)) nz = P.z;
+  for (let it = 0; it < 2; it++) for (const b of colliders) {
+    if (P.y >= b.top - .45) continue;
+    const cx = Math.max(b.x0, Math.min(nx, b.x1)), cz = Math.max(b.z0, Math.min(nz, b.z1)), dx = nx - cx, dz = nz - cz, d2 = dx * dx + dz * dz;
+    if (d2 >= R * R) continue;
+    if (d2 > 1e-6) { const d = Math.sqrt(d2), p = R - d; nx += dx / d * p; nz += dz / d * p; }
+    else { const o = [nx - b.x0 + R, b.x1 - nx + R, nz - b.z0 + R, b.z1 - nz + R], mi = o.indexOf(Math.min(...o)); if (mi === 0) nx = b.x0 - R; else if (mi === 1) nx = b.x1 + R; else if (mi === 2) nz = b.z0 - R; else nz = b.z1 + R; }
+  }
+  for (const c of cars) { const dx = nx - c.g.position.x, dz = nz - c.g.position.z; if (Math.abs(dx) < 2.1 + R && Math.abs(dz) < 1 + R) { nz = c.g.position.z + Math.sign(dz || 1) * (1 + R + .05); } }
+  P.x = nx; P.z = nz;
+}
+
+/* ================= INPUT ================= */
+const keys = {}; let camYaw = 0, camPitch = .32, camDist = 9;
+let joy = { x: 0, y: 0, id: null }, runToggle = false, jumpReq = false, uiBusy = () => $("dlg").style.display === "flex" || $("chatbar").style.display === "flex" || document.querySelector(".modal.on") || $("creator").classList.contains("on");
+addEventListener("keydown", e => {
+  if (e.target.tagName === "INPUT") { if (e.key === "Enter" && e.target.id === "chatIn") sendChat(); if (e.key === "Escape") closeChat(); return; }
+  keys[e.code] = true;
+  if (e.code === "Space") { jumpReq = true; e.preventDefault(); }
+  if (e.code === "KeyE" || e.code === "KeyF") { if ($("dlg").style.display !== "flex") tryTalk(); }
+  if (e.code === "Enter") { e.preventDefault(); openChat(); }
+  if (e.code === "Escape") { closeDlg(); document.querySelectorAll(".modal.on").forEach(m => m.classList.remove("on")); }
+  if ($("dlg").style.display === "flex" && /^Digit[1-4]$/.test(e.code)) { const b = $("dChs").children[+e.code.slice(5) - 1]; b && b.click(); }
+});
+addEventListener("keyup", e => { keys[e.code] = false; });
+addEventListener("blur", () => { for (const k in keys) keys[k] = false; });
+// camera drag (mouse, touchpad, touch outside joystick)
+let drag = null;
+canvas.addEventListener("pointerdown", e => { if (e.pointerType === "touch" && joy.id === e.pointerId) return; drag = { id: e.pointerId, x: e.clientX, y: e.clientY }; canvas.setPointerCapture(e.pointerId); canvas.focus(); });
+canvas.addEventListener("pointermove", e => { if (!drag || drag.id !== e.pointerId) return; const s = e.pointerType === "touch" ? .006 : .005; camYaw -= (e.clientX - drag.x) * s; camPitch = Math.max(-.15, Math.min(1.25, camPitch + (e.clientY - drag.y) * s)); drag.x = e.clientX; drag.y = e.clientY; });
+const endDrag = e => { if (drag && drag.id === e.pointerId) drag = null; };
+canvas.addEventListener("pointerup", endDrag); canvas.addEventListener("pointercancel", endDrag);
+canvas.addEventListener("wheel", e => { e.preventDefault(); camDist = Math.max(4, Math.min(22, camDist + e.deltaY * .01)); }, { passive: false });
+// pinch zoom
+const touches = new Map(); let pinch0 = 0;
+canvas.addEventListener("touchstart", e => { if (e.touches.length === 2) pinch0 = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY); }, { passive: true });
+canvas.addEventListener("touchmove", e => { if (e.touches.length === 2 && pinch0) { const d = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY); camDist = Math.max(4, Math.min(22, camDist * pinch0 / d)); pinch0 = d; drag = null; } }, { passive: true });
+// joystick
+const joyEl = $("joy"), knob = $("knob");
+joyEl.addEventListener("pointerdown", e => { joy.id = e.pointerId; joyEl.setPointerCapture(e.pointerId); joyMove(e); });
+joyEl.addEventListener("pointermove", e => { if (e.pointerId === joy.id) joyMove(e); });
+const joyEnd = e => { if (e.pointerId !== joy.id) return; joy = { x: 0, y: 0, id: null }; knob.style.transform = ""; };
+joyEl.addEventListener("pointerup", joyEnd); joyEl.addEventListener("pointercancel", joyEnd);
+function joyMove(e) { const r = joyEl.getBoundingClientRect(), mx = r.width / 2; let dx = e.clientX - r.left - mx, dy = e.clientY - r.top - mx; const d = Math.hypot(dx, dy), lim = mx - 10; if (d > lim) { dx *= lim / d; dy *= lim / d; } joy.x = dx / lim; joy.y = dy / lim; knob.style.transform = `translate(${dx}px,${dy}px)`; }
+$("bJump").addEventListener("pointerdown", e => { e.preventDefault(); jumpReq = true; });
+$("bTalk").addEventListener("click", () => tryTalk());
+$("bRun").addEventListener("click", () => { runToggle = !runToggle; $("bRun").classList.toggle("on", runToggle); });
+
+/* ================= UI ================= */
+let toastT;
+function toast(html, ms = 2200) { const t = $("toast"); t.innerHTML = html; t.classList.add("on"); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove("on"), ms); }
+let koVoice = null;
+function loadVoices() { const v = speechSynthesis.getVoices(); koVoice = v.find(x => /^ko/i.test(x.lang)) || null; }
+if ("speechSynthesis" in window) { loadVoices(); speechSynthesis.onvoiceschanged = loadVoices; }
+function say(text) {
+  if (!("speechSynthesis" in window)) return; speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(text.replace(/\(.*?\)/g, "")); u.lang = "ko-KR"; if (koVoice) u.voice = koVoice; u.rate = .9; speechSynthesis.speak(u);
+}
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+let activeQ = null;
+function renderQuests() {
+  const list = $("qlist"); list.innerHTML = "";
+  const doneN = MISSIONS.filter(q => save.done[q.id]).length; $("qcount").textContent = `${doneN}/${MISSIONS.length}`;
+  if (!activeQ || save.done[activeQ]) activeQ = (MISSIONS.find(q => !save.done[q.id]) || {}).id || null;
+  for (const q of MISSIONS) {
+    const b = document.createElement("button"), d = save.done[q.id];
+    b.className = "q" + (d ? " done" : "") + (q.id === activeQ ? " on" : "");
+    b.innerHTML = `<span class="ic">${d ? "✅" : q.ic}</span><span><span class="t">${esc(q.task)}</span><br><span class="ko" style="font-size:12px;color:var(--muted)">${esc(q.place)}</span>${d ? ` <span class="stars">${"★".repeat(d)}${"☆".repeat(3 - d)}</span>` : ""}</span>`;
+    b.onclick = () => { activeQ = q.id; renderQuests(); toast(`🎯 <span class="ko">${esc(q.place)}</span> руу яв. Газрын зураг дээрх улаан цэгийг дага.`); };
+    list.appendChild(b);
+  }
+  $("money").textContent = save.money.toLocaleString();
+  $("stars").textContent = Object.values(save.done).reduce((a, b) => a + b, 0);
+  for (const n of npcs) n.mark.visible = !save.done[n.q.id];
+  if (doneN === MISSIONS.length && !save.finished) { save.finished = true; persist(); setTimeout(() => toast(`<span class="big">축하합니다! 🎉</span>Бүх даалгаврыг биелүүллээ. Та Сөүлд амьдарч чадна!`, 5000), 1200); }
+}
+if (smallScreen) { $("quests").classList.add("min"); $("qmin").textContent = "+"; }
+$("qmin").onclick = () => { const q = $("quests"); q.classList.toggle("min"); $("qmin").textContent = q.classList.contains("min") ? "+" : "–"; };
+function renderWords() {
+  const all = [...WORDS.map(w => ({ ko: w[0], rom: w[1], mn: w[2], got: save.words.includes(w[0]), kind: "🃏" })), ...SIGNS.map(s => ({ ko: s[0], rom: s[1], mn: s[2], got: save.signs.includes(s[0]), kind: "🏷️" }))];
+  $("wordList").innerHTML = all.map(w => `<button class="wc${w.got ? "" : " lock"}" data-k="${esc(w.ko)}"><div class="k">${esc(w.ko)}</div><div class="r">${w.got ? esc(w.rom) : "???"}</div><div class="m">${w.kind} ${w.got ? esc(w.mn) : "Олоогүй"}</div></button>`).join("");
+  $("wordList").querySelectorAll(".wc:not(.lock)").forEach(b => b.onclick = () => say(b.dataset.k));
+}
+function renderBag() {
+  $("bagList").innerHTML = save.items.length ? save.items.map(i => `<button class="wc" data-k="${esc(i[1])}"><div style="font-size:30px">${i[0]}</div><div class="k" style="font-size:16px">${esc(i[1])}</div><div class="m">${esc(i[2])}</div></button>`).join("") : `<p class="sub">Хоосон байна. Даалгавар биелүүлж юм худалдаж аваарай.</p>`;
+  $("bagList").querySelectorAll(".wc").forEach(b => b.onclick = () => say(b.dataset.k));
+}
+$("tWords").onclick = () => { renderWords(); $("mWords").classList.add("on"); };
+$("tBag").onclick = () => { renderBag(); $("mBag").classList.add("on"); };
+$("tChar").onclick = () => openCreator();
+$("tChat").onclick = () => openChat();
+document.querySelectorAll("[data-close]").forEach(b => b.onclick = () => b.closest(".modal").classList.remove("on"));
+document.querySelectorAll(".modal").forEach(m => m.addEventListener("pointerdown", e => { if (e.target === m) m.classList.remove("on"); }));
+$("reset").onclick = () => { if (!confirm("Бүх даалгавар, үг, мөнгө эхнээсээ эхэлнэ. Итгэлтэй байна уу?")) return; Object.assign(save, { done: {}, money: 50000, items: [], words: [], signs: [], finished: false }); persist(); cards.forEach(c => { c.got = false; c.g.visible = c.glow.visible = true; }); renderQuests(); renderBag(); toast("Шинээр эхэллээ!"); };
+
+/* dialog */
+let D = null;
+function nearNPC() { let best = null, bd = 4.2; for (const n of npcs) { const d = Math.hypot(P.x - n.x, P.z - n.z); if (d < bd && Math.abs(P.y - n.ch.position.y) < 3) { bd = d; best = n; } } return best; }
+function tryTalk() {
+  if (uiBusy()) return; const n = nearNPC(); if (!n) return;
+  const q = n.q;
+  if (save.done[q.id]) { const lines = ["또 오세요! 😊", "안녕하세요! 또 만났네요.", "좋은 하루 보내세요!"]; const l = pick(lines); bubble(n.ch, l); say(l); return; }
+  if (save.money < q.cost) { toast("Мөнгө хүрэлцэхгүй байна 😢 Цүнхнээс явцаа эхлүүлж болно."); return; }
+  D = { n, q, step: 0, wrong: 0, hint: false };
+  n.ch.rotation.y = Math.atan2(P.x - n.x, P.z - n.z); P.ry = Math.atan2(n.x - P.x, n.z - P.z);
+  camYaw = P.ry + Math.PI + .9; camPitch = .22; camDist = Math.min(camDist, 7.5); // side-on view of both speakers
+  $("dlg").style.display = "flex"; $("dlg").classList.remove("hint"); showStep();
+}
+function showStep() {
+  const [ko, rom, mn, chs] = D.q.steps[D.step];
+  $("dWho").textContent = D.q.npc; $("dStep").textContent = `${D.q.place} · ${D.step + 1}/${D.q.steps.length}`;
+  $("dLine").textContent = ko; $("dRom").textContent = rom; $("dMn").textContent = "🇲🇳 " + mn; $("dFb").className = "fb"; $("dFb").textContent = "";
+  const order = chs.map((c, i) => i).sort(() => Math.random() - .5);
+  $("dChs").innerHTML = ""; order.forEach((i, k) => { const c = chs[i], b = document.createElement("button"); b.className = "ch";
+    b.innerHTML = `<div class="ck">${k + 1}. ${esc(c[0])}</div><div class="cr">${esc(c[1])}</div><div class="cm">🇲🇳 ${esc(c[2])}</div>`;
+    b.onclick = () => answer(b, c); $("dChs").appendChild(b); });
+  bubble(D.n.ch, ko.replace(/^\(.*?\)\s*/, "")); say(ko);
+}
+function answer(b, c) {
+  if (!D || D.lock) return;
+  if (c[3]) {
+    b.classList.add("good"); D.lock = true; say(c[0]); bubble(P.ch, c[0]); netChat(c[0]);
+    $("dFb").className = "fb good"; $("dFb").textContent = pick(["잘했어요! Сайн байна!", "맞아요! Зөв!", "완벽해요! Төгс!"]);
+    setTimeout(() => { D.lock = false; D.step++; if (D.step < D.q.steps.length) showStep(); else finishQuest(); }, 1100);
+  } else {
+    b.classList.add("bad"); D.wrong++; $("dFb").className = "fb bad"; $("dFb").textContent = "✗ " + (c[4] || "Буруу байна, дахин оролдоорой.");
+    b.querySelector(".cm").style.display = "block";
+  }
+}
+function finishQuest() {
+  const q = D.q, stars = Math.max(1, 3 - D.wrong - (D.hint ? 1 : 0));
+  save.done[q.id] = stars; save.money -= q.cost; save.items.push(q.item); persist();
+  closeDlg(); renderQuests();
+  toast(`<span class="big">${q.item[0]} ${esc(q.item[1])}</span>Даалгавар биеллээ! ${"★".repeat(stars)}${"☆".repeat(3 - stars)} · −${q.cost.toLocaleString()}원`, 3200);
+  fx(P.x, P.y + 2, P.z, "#ffb627");
+}
+function closeDlg() { $("dlg").style.display = "none"; D = null; if ("speechSynthesis" in window) speechSynthesis.cancel(); }
+$("dX").onclick = closeDlg;
+$("dSay").onclick = () => D && say(D.q.steps[D.step][0]);
+$("dHint").onclick = () => { if (!D) return; $("dlg").classList.toggle("hint"); if ($("dlg").classList.contains("hint")) D.hint = true; };
+
+/* chat */
+function openChat() { if ($("dlg").style.display === "flex") return; $("chatbar").style.display = "flex"; setTimeout(() => $("chatIn").focus(), 0); }
+function closeChat() { $("chatbar").style.display = "none"; $("chatIn").blur(); canvas.focus(); }
+function sendChat() { const t = $("chatIn").value.trim(); $("chatIn").value = ""; if (t) { bubble(P.ch, t); netChat(t); } closeChat(); }
+$("chatGo").onclick = sendChat;
+
+/* particles */
+const fxs = [];
+function fx(x, y, z, color) { for (let i = 0; i < 24; i++) { const m = new THREE.Mesh(new THREE.BoxGeometry(.25, .25, .25), new THREE.MeshBasicMaterial({ color: i % 2 ? color : "#ffffff" })); m.position.set(x, y, z); scene.add(m); fxs.push({ m, v: new THREE.Vector3((Math.random() - .5) * 8, 4 + Math.random() * 6, (Math.random() - .5) * 8), t: 1.2 }); } }
+
+/* ================= CREATOR ================= */
+let look = save.look || randLook(), creating = false;
+function buildCreator() {
+  document.querySelectorAll("#creator .sw").forEach(el => { const k = el.dataset.k; el.innerHTML = PAL[k].map(c => `<button style="background:${c}" data-v="${c}" aria-label="${c}"></button>`).join(""); });
+  const o1 = document.querySelector('.opts[data-k="style"]'), o2 = document.querySelector('.opts[data-k="face"]');
+  o1.innerHTML = STYLES.map(([v, n]) => `<button data-v="${v}">${n}</button>`).join(""); o2.innerHTML = FACES.map(([v, n]) => `<button data-v="${v}">${n}</button>`).join("");
+  document.querySelectorAll("#creator [data-k] button").forEach(b => b.onclick = () => { const k = b.parentElement.dataset.k; look[k] = k === "face" ? +b.dataset.v : b.dataset.v; refreshCreator(); });
+  $("rnd").onclick = () => { look = randLook(); refreshCreator(); };
+  $("go").onclick = () => {
+    const nm = $("nmIn").value.trim(); if (!nm) { $("nmIn").focus(); toast("Нэрээ бичээрэй 🙂"); return; }
+    save.name = nm.slice(0, 16); save.look = { ...look }; persist(); creating = false; $("creator").classList.remove("on"); $("hud").hidden = false;
+    setMe(); net.hello(); camYaw = P.ry - Math.PI; camDist = 9;
+    if (!save.seenIntro) { save.seenIntro = true; persist(); setTimeout(() => toast(`<span class="big">서울에 오신 것을 환영합니다!</span>Сөүлд тавтай морил! Эхний даалгавар: <span class="ko">편의점</span>. Газрын зураг дээрх улаан цэгийг дага.`, 4500), 400); }
+    setTimeout(() => $("help").style.opacity = 0, 14000); canvas.focus();
+  };
+}
+function refreshCreator() {
+  document.querySelectorAll("#creator [data-k]").forEach(el => { const k = el.dataset.k; el.querySelectorAll("button").forEach(b => b.classList.toggle("on", String(look[k]) === b.dataset.v)); });
+  setPlayerChar(look);
+}
+function openCreator() { if (uiBusy()) return; creating = true; look = { ...(save.look || look) }; $("nmIn").value = save.name || ""; $("creator").classList.add("on"); $("hud").hidden = true; refreshCreator(); }
+function setPlayerChar(l) {
+  if (P.ch) { scene.remove(P.ch); if (P.ch.userData.tag) P.ch.userData.tag = null; }
+  P.ch = makeChar(l); P.ch.position.set(P.x, P.y, P.z); P.ch.rotation.y = P.ry; scene.add(P.ch);
+}
+function setMe() {
+  $("meName").textContent = save.name; $("meAv").textContent = save.name.slice(0, 1).toUpperCase(); $("meAv").style.background = save.look.shirt;
+  setPlayerChar(save.look);
+  const tag = labelSprite(save.name); tag.position.y = 3.5; P.ch.add(tag);
+}
+
+/* ================= NETWORK ================= */
+const others = new Map(); // id -> {ch, tgt:[x,y,z,r,a], n}
+const net = {
+  ws: null, id: null, retry: 0, lastSend: 0,
+  connect() {
+    try { this.ws = new WebSocket((location.protocol === "https:" ? "wss://" : "ws://") + location.host + "/seoul-ws"); } catch { return; }
+    this.ws.onopen = () => { this.retry = 0; if (save.look && !creating) this.hello(); };
+    this.ws.onmessage = e => { let m; try { m = JSON.parse(e.data); } catch { return; } this.on(m); };
+    this.ws.onclose = () => { for (const id of [...others.keys()]) dropOther(id); updNet(); if (location.protocol !== "file:") setTimeout(() => this.connect(), Math.min(15000, 1500 * ++this.retry)); };
+    this.ws.onerror = () => {};
+  },
+  send(m) { if (this.ws && this.ws.readyState === 1) this.ws.send(JSON.stringify(m)); },
+  hello() { if (!save.look || !this.ws || this.ws.readyState !== 1) return; if (this.helloed) { this.send({ t: "look", n: save.name, look: save.look }); return; } this.helloed = true; this.send({ t: "hi", n: save.name, look: save.look }); },
+  on(m) {
+    if (m.t === "w") { this.id = m.id; m.all.forEach(addOther); updNet(); }
+    else if (m.t === "j") { addOther(m); updNet(); }
+    else if (m.t === "l") { dropOther(m.id); updNet(); }
+    else if (m.t === "s") { for (const [id, x, y, z, r, a] of m.ps) { const o = others.get(id); if (o) o.tgt = [x, y, z, r, a]; } }
+    else if (m.t === "c") { const o = others.get(m.id); if (o) bubble(o.ch, m.m); }
+  }
+};
+const _connect = net.connect; net.connect = function () { this.helloed = false; this.id = null; _connect.call(this); };
+function addOther(m) {
+  if (m.id === net.id) return; dropOther(m.id);
+  const ch = makeChar(m.look); const tag = labelSprite(m.n, "#2f6bffcc"); tag.position.y = 3.5; ch.add(tag);
+  const p = m.p || [0, 0, 20, 0, 0]; ch.position.set(p[0], p[1], p[2]); scene.add(ch);
+  others.set(m.id, { ch, tgt: p, n: m.n });
+}
+function dropOther(id) { const o = others.get(id); if (o) { scene.remove(o.ch); others.delete(id); } }
+function updNet() { $("net").textContent = "👥 " + (others.size + 1); }
+function netChat(t) { net.send({ t: "c", m: t }); }
+
+/* ================= MINIMAP ================= */
+const mini = $("mini"), mctx = mini.getContext("2d");
+function drawMini() {
+  const W = mini.width, S = W / 2 / 110, cx = P.x, cz = P.z; mctx.save(); mctx.clearRect(0, 0, W, W);
+  mctx.beginPath(); mctx.arc(W / 2, W / 2, W / 2, 0, 7); mctx.clip(); mctx.fillStyle = "#cfe6c0"; mctx.fillRect(0, 0, W, W);
+  mctx.translate(W / 2, W / 2); mctx.rotate(camYaw); mctx.scale(S, S); mctx.translate(-cx, -cz);
+  mctx.fillStyle = "#e4e1da"; mctx.fillRect(-205, -150, 410, 256);
+  mctx.fillStyle = "#6aa6e8"; mctx.fillRect(-300, RIVER.z0, 600, RIVER.z1 - RIVER.z0);
+  mctx.fillStyle = "#6c9e5a"; mctx.beginPath(); mctx.arc(HILL.x, HILL.z, HILL.r, 0, 7); mctx.fill();
+  mctx.fillStyle = "#e9d9b0"; mctx.fillRect(-70, -220, 140, 58);
+  mctx.fillStyle = "#555b66"; for (const [x, w] of VR) mctx.fillRect(x - w / 2, -150, w, 256); for (const [z, w] of HR) mctx.fillRect(-205, z - w / 2, HR_X1(z) + 205, w);
+  mctx.fillStyle = "#d9cfbd"; mctx.fillRect(-11, -160, 22, 266); mctx.fillStyle = "#9aa1ab"; mctx.fillRect(-9, 104, 18, 62);
+  mctx.fillStyle = "#b5b9c2"; for (const b of colliders) if (b.x1 - b.x0 > 4 && b.top > 5) mctx.fillRect(b.x0, b.z0, b.x1 - b.x0, b.z1 - b.z0);
+  for (const c of cards) if (!c.got) { mctx.fillStyle = "#ffb627"; mctx.fillRect(c.g.position.x - 2, c.g.position.z - 2, 4, 4); }
+  for (const n of npcs) { mctx.fillStyle = save.done[n.q.id] ? "#22a861" : n.q.id === activeQ ? "#ff2d55" : "#ff9aa2"; mctx.beginPath(); mctx.arc(n.x, n.z, n.q.id === activeQ ? 6 : 4, 0, 7); mctx.fill(); }
+  mctx.fillStyle = "#2f6bff"; for (const o of others.values()) { mctx.beginPath(); mctx.arc(o.ch.position.x, o.ch.position.z, 3.5, 0, 7); mctx.fill(); }
+  mctx.restore();
+  // arrow to active target at the edge
+  const tn = npcs.find(n => n.q.id === activeQ);
+  if (tn) { const vx = tn.x - cx, vz = tn.z - cz, rx = vx * Math.cos(camYaw) - vz * Math.sin(camYaw), ry = vx * Math.sin(camYaw) + vz * Math.cos(camYaw), rl = Math.hypot(rx, ry) || 1, d = rl * S; if (d > W / 2 - 12) { const r = W / 2 - 14, ax = W / 2 + rx / rl * r, ay = W / 2 + ry / rl * r; mctx.fillStyle = "#ff2d55"; mctx.beginPath(); mctx.arc(ax, ay, 9, 0, 7); mctx.fill(); } }
+  mctx.save(); mctx.translate(W / 2, W / 2); mctx.rotate(-(P.ry - camYaw)); mctx.fillStyle = "#fff"; mctx.strokeStyle = "#ff5a5f"; mctx.lineWidth = 4;
+  mctx.beginPath(); mctx.moveTo(0, 14); mctx.lineTo(10, -10); mctx.lineTo(0, -4); mctx.lineTo(-10, -10); mctx.closePath(); mctx.fill(); mctx.stroke(); mctx.restore();
+  mctx.fillStyle = "#1b1f2a"; mctx.font = "800 22px Manrope"; mctx.textAlign = "center"; mctx.fillText("N", W / 2 + Math.sin(camYaw) * (W / 2 - 18), W / 2 - Math.cos(camYaw) * (W / 2 - 18) + 8);
+}
+
+/* ================= LOOP ================= */
+let beacon;
+function buildBeacon() { beacon = new THREE.Mesh(new THREE.CylinderGeometry(1.4, 1.4, 60, 16, 1, true), new THREE.MeshBasicMaterial({ color: "#ff5a5f", transparent: true, opacity: .22, depthWrite: false, side: THREE.DoubleSide })); scene.add(beacon); }
+const clock = new THREE.Clock(); let miniT = 0, sendT = 0, signT = 0, lastSign = null;
+function resize() { const w = innerWidth, h = innerHeight; renderer.setSize(w, h, false); camera.aspect = w / h; camera.fov = w < h ? 72 : 60; camera.updateProjectionMatrix(); }
+addEventListener("resize", resize);
+function tick() {
+  requestAnimationFrame(tick);
+  const dt = Math.min(clock.getDelta(), .05), t = clock.elapsedTime;
+  // input → movement relative to camera
+  let ix = 0, iz = 0;
+  if (!uiBusy()) {
+    if (keys.KeyW || keys.ArrowUp) iz += 1; if (keys.KeyS || keys.ArrowDown) iz -= 1; if (keys.KeyA || keys.ArrowLeft) ix -= 1; if (keys.KeyD || keys.ArrowRight) ix += 1;
+    if (joy.id !== null) { ix += joy.x; iz -= joy.y; }
+  }
+  let mag = Math.min(1, Math.hypot(ix, iz));
+  const run = keys.ShiftLeft || keys.ShiftRight || runToggle || (joy.id !== null && Math.hypot(joy.x, joy.y) > .95);
+  const target = mag > .05 ? (run ? 12 : 6.5) * mag : 0;
+  P.speed += (target - P.speed) * (1 - Math.exp(-dt * 10));
+  if (mag > .05) {
+    const sy = Math.sin(camYaw), cy = Math.cos(camYaw); // camera forward = (-sy,-cy), right = (cy,-sy)
+    const dx = -sy * iz + cy * ix, dz = -cy * iz - sy * ix;
+    const want = Math.atan2(dx, dz); let d = want - P.ry; d = Math.atan2(Math.sin(d), Math.cos(d)); P.ry += d * (1 - Math.exp(-dt * 14));
+    const len = Math.hypot(dx, dz) || 1; moveTo(P.x + dx / len * P.speed * dt, P.z + dz / len * P.speed * dt);
+  } else if (P.speed > .1) moveTo(P.x + Math.sin(P.ry) * P.speed * dt, P.z + Math.cos(P.ry) * P.speed * dt);
+  // vertical
+  const sup = supportAt(P.x, P.z, P.y);
+  if (jumpReq && P.ground && !uiBusy()) { P.vy = 9.5; P.ground = false; }
+  jumpReq = false;
+  P.vy -= 26 * dt; P.y += P.vy * dt;
+  if (P.y <= sup) { P.y = sup; P.vy = 0; P.ground = true; }
+  else if (P.ground && P.vy <= 0 && P.y - sup < .6) { P.y = sup; P.vy = 0; } // follow slopes and small steps down
+  else P.ground = false;
+  if (P.ch) { P.ch.position.set(P.x, P.y, P.z); P.ch.rotation.y = P.ry; animChar(P.ch, creating ? 0 : P.speed, !P.ground, dt); }
+  // camera
+  const tgt = new THREE.Vector3(P.x, P.y + 2.2, P.z);
+  let dist = creating ? 6.5 : camDist, yaw = creating ? P.ry + Math.sin(t * .4) * .5 : camYaw, pitch = creating ? .12 : camPitch;
+  const dir = new THREE.Vector3(Math.sin(yaw) * Math.cos(pitch), Math.sin(pitch), Math.cos(yaw) * Math.cos(pitch));
+  if (!creating) for (let s = 1; s <= 14; s++) { const k = s / 14 * dist, px = tgt.x + dir.x * k, py = tgt.y + dir.y * k, pz = tgt.z + dir.z * k; if (colliders.some(b => px > b.x0 && px < b.x1 && pz > b.z0 && pz < b.z1 && py < b.top && b.top > 3)) { dist = Math.max(2.5, k - .6); break; } }
+  const cp = tgt.clone().addScaledVector(dir, dist); cp.y = Math.max(cp.y, (onBridge(cp.x, cp.z) ? BRIDGE_Y : Math.max(terrain(cp.x, cp.z), -1)) + .6);
+  if (creating) { const wide = innerWidth > 700, sh = wide ? 1.7 : 0; tgt.x -= Math.cos(yaw) * sh; tgt.z += Math.sin(yaw) * sh; tgt.y -= wide ? .6 : 1.3; }
+  camera.position.lerp(cp, creating ? 1 : 1 - Math.exp(-dt * 18)); camera.lookAt(tgt);
+  sun.position.set(P.x + 60, 120, P.z + 40); sun.target.position.set(P.x, 0, P.z);
+  // world animation
+  for (const c of cars) { c.g.position.x += c.dir * c.v * dt; if (c.g.position.x > c.x1) c.g.position.x = c.x0; if (c.g.position.x < c.x0) c.g.position.x = c.x1; }
+  for (const c of cards) if (!c.got) { c.g.rotation.y = t * 1.6; c.g.position.y = c.y + Math.sin(t * 2 + c.g.position.x) * .25;
+    if (Math.hypot(P.x - c.g.position.x, P.z - c.g.position.z) < 1.8 && Math.abs(P.y + 1 - c.y) < 2.5) { c.got = true; c.g.visible = c.glow.visible = false; save.words.push(c.ko); persist(); fx(c.g.position.x, c.y, c.g.position.z, "#ff5a5f"); say(c.ko); toast(`<span class="big">${esc(c.ko)}</span><i>${esc(c.rom)}</i> = <b>${esc(c.mn)}</b> · 🃏 ${save.words.length}/${WORDS.length}`, 2800); } }
+  for (const n of npcs) { n.mark.position.y = 4.4 + Math.sin(t * 3) * .15; const u = n.ch.userData; u.body.position.y = Math.sin(t * 2 + n.x) * .03; }
+  const tn = npcs.find(n => n.q.id === activeQ); if (beacon) { beacon.visible = !!tn && !creating && !D; if (tn) beacon.position.set(tn.x, tn.ch.position.y + 30, tn.z); beacon.material.opacity = .16 + Math.sin(t * 3) * .06; }
+  if (window.WATER) WATER.position.y = -1.1 + Math.sin(t) * .05;
+  for (let i = fxs.length - 1; i >= 0; i--) { const f = fxs[i]; f.t -= dt; f.v.y -= 18 * dt; f.m.position.addScaledVector(f.v, dt); f.m.rotation.x += dt * 8; if (f.t <= 0) { scene.remove(f.m); fxs.splice(i, 1); } }
+  // bubbles
+  const chars = [P.ch, ...[...others.values()].map(o => o.ch), ...npcs.map(n => n.ch)];
+  for (const ch of chars) if (ch && ch.userData.bub) { ch.userData.bubT -= dt; if (ch.userData.bubT <= 0) { ch.remove(ch.userData.bub); ch.userData.bub = null; } }
+  // other players: smooth toward last snapshot
+  const k = 1 - Math.exp(-dt * 10);
+  for (const o of others.values()) { const [x, y, z, r, a] = o.tgt, p = o.ch.position, dx = x - p.x, dz = z - p.z; const moved = Math.hypot(dx, dz);
+    if (moved > 30) p.set(x, y, z); else { p.x += dx * k; p.y += (y - p.y) * k; p.z += dz * k; }
+    let d = r - o.ch.rotation.y; d = Math.atan2(Math.sin(d), Math.cos(d)); o.ch.rotation.y += d * k; animChar(o.ch, a === 2 ? 12 : a === 1 ? 6 : 0, a === 3, dt); }
+  // prompts
+  const n = !creating && !uiBusy() ? nearNPC() : null;
+  $("prompt").style.display = n && !isTouch ? "flex" : "none"; $("bTalk").style.display = n ? "grid" : "none";
+  if (n) $("promptT").innerHTML = `<span class="ko">${esc(n.q.npc.split(" ")[0])}</span>-тэй ярих${save.done[n.q.id] ? " ✓" : ""}`;
+  if ((signT += dt) > .25) { signT = 0; let s = null; if (!creating) for (const sp of signSpots) if (Math.hypot(P.x - sp.x, P.z - sp.z) < 6) { s = sp; break; }
+    if (s !== lastSign) { lastSign = s; $("signhint").style.display = s ? "block" : "none"; if (s) { $("signhint").innerHTML = `🏷️ <b>${esc(s.ko)}</b> <i style="color:var(--muted)">${esc(s.rom)}</i> = ${esc(s.mn)}`; if (!save.signs.includes(s.ko)) { save.signs.push(s.ko); persist(); } } } }
+  if ((miniT += dt) > .066 && !creating) { miniT = 0; drawMini(); }
+  if ((sendT += dt) > .1 && !creating && net.id) { sendT = 0; net.send({ t: "p", p: [+P.x.toFixed(2), +P.y.toFixed(2), +P.z.toFixed(2), +P.ry.toFixed(2), !P.ground ? 3 : P.speed > 9 ? 2 : P.speed > .6 ? 1 : 0] }); }
+  renderer.render(scene, camera);
+}
+
+/* ================= BOOT ================= */
+(async function boot() {
+  // Google serves Korean in unicode-range slices, so ask for every Hangul character the world draws.
+  const ko = [...new Set((JSON.stringify(MISSIONS) + JSON.stringify(WORDS) + JSON.stringify(SIGNS) + "경복궁남산서울타워한강공원단어카드").match(/[\uac00-\ud7a3]/g))].join("");
+  try { await Promise.race([Promise.all([document.fonts.load('800 40px "Noto Sans KR"', ko), document.fonts.load("800 20px Manrope")]), new Promise(r => setTimeout(r, 3500))]); } catch {}
+  resize(); buildWorld(); buildNPCs(); buildCards(); buildCars(); buildBeacon(); buildCreator(); renderQuests();
+  P.y = 0; $("loading").remove();
+  if (save.look && save.name) { $("hud").hidden = false; setMe(); camYaw = P.ry - Math.PI; setTimeout(() => $("help").style.opacity = 0, 12000); }
+  else { look = randLook(); openCreator(); }
+  net.connect(); tick();
+})();
+</script>
+</body>
+</html>

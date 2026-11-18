@@ -8,15 +8,22 @@ const { WebSocketServer } = require("ws");
 
 const PORT = process.env.PORT || 3000;
 const INDEX = fs.readFileSync(path.join(__dirname, "public", "index.html"));
+const SEOUL = fs.readFileSync(path.join(__dirname, "public", "seoul.html"));
 const TURN_MS = 30000, BB = 20, SB = 10, TL_PAY = 10;
 const G = { bj: { min: 1, max: 7, minBal: 10 }, tl: { min: 2, max: 4, minBal: 10 }, pk: { min: 2, max: 8, minBal: 20 } };
 
 const server = http.createServer((req, res) => {
   if (req.url === "/health") { res.end("ok"); return; }
+  const isSeoul = req.url.split("?")[0].replace(/\/$/, "") === "/seoul";
   res.writeHead(200, { "content-type": "text/html; charset=utf-8", "cache-control": "no-cache" });
-  res.end(INDEX);
+  res.end(isSeoul ? SEOUL : INDEX);
 });
-const wss = new WebSocketServer({ server, maxPayload: 16 * 1024 });
+const wss = new WebSocketServer({ noServer: true, maxPayload: 16 * 1024 });
+const seoulWss = new WebSocketServer({ noServer: true, maxPayload: 4 * 1024 });
+server.on("upgrade", (req, sock, head) => {
+  const target = req.url.split("?")[0] === "/seoul-ws" ? seoulWss : wss;
+  target.handleUpgrade(req, sock, head, ws => target.emit("connection", ws, req));
+});
 
 const tables = new Map(); // id -> {id,name,game,created,last,T,seats,chat}
 const clients = new Map(); // ws -> {id,nick,tid}
@@ -309,5 +316,43 @@ setInterval(() => {
 }, 60000);
 // Keep connections alive behind proxies.
 setInterval(() => { for (const ws of clients.keys()) if (ws.readyState === 1) ws.ping(); }, 25000);
+
+/* ---------------- Seoul 3D world (positions + chat only) ---------------- */
+const walkers = new Map(); // ws -> {id,n,look,p:[x,y,z,r,a]}
+let walkerSeq = 0;
+const LOOK_KEYS = { skin: 1, hair: 1, shirt: 1, pants: 1, shoes: 1 }, STYLES = ["short", "long", "cap", "bun", "none"];
+function cleanLook(l) {
+  const o = { style: "short", face: 0 }; if (!l || typeof l !== "object") return o;
+  for (const k in LOOK_KEYS) if (/^#[0-9a-f]{6}$/i.test(l[k])) o[k] = l[k];
+  if (STYLES.includes(l.style)) o.style = l.style; o.face = Math.min(3, Math.max(0, l.face | 0)); return o;
+}
+const wsend = (ws, m) => { if (ws.readyState === 1) ws.send(typeof m === "string" ? m : JSON.stringify(m)); };
+seoulWss.on("connection", ws => {
+  if (walkers.size >= 60) { wsend(ws, { t: "full" }); ws.close(); return; }
+  const w = { id: "w" + ++walkerSeq, n: "", look: null, p: [0, 0, 20, 0, 0] };
+  ws.on("message", raw => {
+    let m; try { m = JSON.parse(raw); } catch { return; } if (!m || typeof m !== "object") return;
+    if (m.t === "hi" && !w.look) {
+      w.n = clean(m.n, 16) || "Тоглогч"; w.look = cleanLook(m.look); walkers.set(ws, w);
+      wsend(ws, { t: "w", id: w.id, all: [...walkers.values()].filter(o => o !== w).map(o => ({ id: o.id, n: o.n, look: o.look, p: o.p })) });
+      for (const o of walkers.keys()) if (o !== ws) wsend(o, { t: "j", id: w.id, n: w.n, look: w.look, p: w.p });
+    } else if (m.t === "p" && w.look && Array.isArray(m.p)) {
+      const v = m.p.slice(0, 5).map(Number); if (v.length === 5 && v.every(Number.isFinite)) w.p = [Math.max(-250, Math.min(250, v[0])), Math.max(-20, Math.min(80, v[1])), Math.max(-250, Math.min(250, v[2])), v[3] % 7, v[4] | 0];
+    } else if (m.t === "c" && w.look) {
+      const t = clean(m.m, 80); if (!t || Date.now() - (w.lastChat || 0) < 700) return; w.lastChat = Date.now();
+      const out = JSON.stringify({ t: "c", id: w.id, m: t }); for (const o of walkers.keys()) wsend(o, out);
+    } else if (m.t === "look" && w.look) {
+      w.look = cleanLook(m.look); w.n = clean(m.n, 16) || w.n;
+      for (const o of walkers.keys()) if (o !== ws) wsend(o, { t: "j", id: w.id, n: w.n, look: w.look, p: w.p });
+    }
+  });
+  ws.on("close", () => { if (walkers.delete(ws)) for (const o of walkers.keys()) wsend(o, { t: "l", id: w.id }); });
+});
+setInterval(() => {
+  if (walkers.size < 2) return;
+  const out = JSON.stringify({ t: "s", ps: [...walkers.values()].map(w => [w.id, ...w.p.map(v => Math.round(v * 100) / 100)]) });
+  for (const ws of walkers.keys()) wsend(ws, out);
+}, 100);
+setInterval(() => { for (const ws of walkers.keys()) if (ws.readyState === 1) ws.ping(); }, 25000);
 
 server.listen(PORT, () => console.log("Хөзрийн Танхим: http://localhost:" + PORT));
